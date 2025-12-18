@@ -1,50 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Navigation, Search } from 'lucide-react';
+import { MapPin, Navigation, Search, Loader2 } from 'lucide-react';
 
-// Fix Leaflet default marker icon
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+// Lazy load map components to avoid SSR issues
+const MapComponents = lazy(() => import('./MapComponents'));
 
 interface LocationPickerProps {
   initialLocation?: { lat: number; lng: number };
   onLocationSelect: (location: { lat: number; lng: number; address?: string }) => void;
-}
-
-function LocationMarker({ 
-  position, 
-  setPosition 
-}: { 
-  position: { lat: number; lng: number } | null;
-  setPosition: (pos: { lat: number; lng: number }) => void;
-}) {
-  useMapEvents({
-    click(e) {
-      setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
-    },
-  });
-
-  return position === null ? null : (
-    <Marker position={[position.lat, position.lng]} />
-  );
-}
-
-function MapController({ center }: { center: { lat: number; lng: number } }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    map.setView([center.lat, center.lng], 15);
-  }, [center, map]);
-  
-  return null;
 }
 
 export default function LocationPicker({ initialLocation, onLocationSelect }: LocationPickerProps) {
@@ -131,18 +95,17 @@ export default function LocationPicker({ initialLocation, onLocationSelect }: Lo
       </div>
 
       <div className="h-[300px] rounded-lg overflow-hidden border border-border">
-        <MapContainer
-          center={[mapCenter.lat, mapCenter.lng]}
-          zoom={13}
-          className="h-full w-full"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        <Suspense fallback={
+          <div className="h-full w-full flex items-center justify-center bg-muted">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        }>
+          <MapComponents
+            mapCenter={mapCenter}
+            position={position}
+            onPositionChange={handlePositionChange}
           />
-          <LocationMarker position={position} setPosition={handlePositionChange} />
-          <MapController center={mapCenter} />
-        </MapContainer>
+        </Suspense>
       </div>
 
       {position && (
