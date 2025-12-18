@@ -1,9 +1,5 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-
-// Lazy load map content to avoid SSR issues
-const BusinessMapContent = lazy(() => import('./BusinessMapContent'));
 
 interface Business {
   id: string;
@@ -33,19 +29,28 @@ export default function BusinessMap({
   zoom = 12,
   height = '400px'
 }: BusinessMapProps) {
+  const [MapContent, setMapContent] = useState<React.ComponentType<any> | null>(null);
+
+  // Dynamic import to avoid SSR/context issues with react-leaflet
+  useEffect(() => {
+    import('./BusinessMapContent').then((mod) => {
+      setMapContent(() => mod.default);
+    });
+  }, []);
+
   return (
     <div className="rounded-lg overflow-hidden border border-border" style={{ height }}>
-      <Suspense fallback={
-        <div className="h-full w-full flex items-center justify-center bg-muted">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      }>
-        <BusinessMapContent
+      {MapContent ? (
+        <MapContent
           businesses={businesses}
           center={center}
           zoom={zoom}
         />
-      </Suspense>
+      ) : (
+        <div className="h-full w-full flex items-center justify-center bg-muted">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
     </div>
   );
 }

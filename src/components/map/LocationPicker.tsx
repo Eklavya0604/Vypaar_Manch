@@ -1,10 +1,7 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MapPin, Navigation, Search, Loader2 } from 'lucide-react';
-
-// Lazy load map components to avoid SSR issues
-const MapComponents = lazy(() => import('./MapComponents'));
 
 interface LocationPickerProps {
   initialLocation?: { lat: number; lng: number };
@@ -20,6 +17,14 @@ export default function LocationPicker({ initialLocation, onLocationSelect }: Lo
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  const [MapComponents, setMapComponents] = useState<React.ComponentType<any> | null>(null);
+
+  // Dynamic import to avoid SSR/context issues with react-leaflet
+  useEffect(() => {
+    import('./MapComponents').then((mod) => {
+      setMapComponents(() => mod.default);
+    });
+  }, []);
 
   const handlePositionChange = (newPos: { lat: number; lng: number }) => {
     setPosition(newPos);
@@ -95,17 +100,17 @@ export default function LocationPicker({ initialLocation, onLocationSelect }: Lo
       </div>
 
       <div className="h-[300px] rounded-lg overflow-hidden border border-border">
-        <Suspense fallback={
-          <div className="h-full w-full flex items-center justify-center bg-muted">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        }>
+        {MapComponents ? (
           <MapComponents
             mapCenter={mapCenter}
             position={position}
             onPositionChange={handlePositionChange}
           />
-        </Suspense>
+        ) : (
+          <div className="h-full w-full flex items-center justify-center bg-muted">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
       </div>
 
       {position && (
