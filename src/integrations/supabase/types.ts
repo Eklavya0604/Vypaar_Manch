@@ -126,6 +126,7 @@ export type Database = {
           operating_hours: Json | null
           owner_id: string
           pincode: string | null
+          qr_code_url: string | null
           slug: string | null
           state: string
           total_reviews: number | null
@@ -156,6 +157,7 @@ export type Database = {
           operating_hours?: Json | null
           owner_id: string
           pincode?: string | null
+          qr_code_url?: string | null
           slug?: string | null
           state: string
           total_reviews?: number | null
@@ -186,6 +188,7 @@ export type Database = {
           operating_hours?: Json | null
           owner_id?: string
           pincode?: string | null
+          qr_code_url?: string | null
           slug?: string | null
           state?: string
           total_reviews?: number | null
@@ -242,6 +245,35 @@ export type Database = {
             columns: ["consumer_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -359,6 +391,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saved_searches: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          query: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          query: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          query?: Json
+          user_id?: string
+        }
+        Relationships: []
       }
       service_requests: {
         Row: {
@@ -510,6 +566,41 @@ export type Database = {
           },
         ]
       }
+      staff_assignments: {
+        Row: {
+          assigned_by: string
+          business_id: string
+          created_at: string
+          id: string
+          permissions: Json | null
+          staff_user_id: string
+        }
+        Insert: {
+          assigned_by: string
+          business_id: string
+          created_at?: string
+          id?: string
+          permissions?: Json | null
+          staff_user_id: string
+        }
+        Update: {
+          assigned_by?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          permissions?: Json | null
+          staff_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_assignments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null
@@ -549,12 +640,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       get_profile_id_from_auth: { Args: never; Returns: string }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_business_owner: { Args: { _user_id: string }; Returns: boolean }
       owns_business: {
@@ -563,6 +686,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "CONSUMER" | "BUSINESS_OWNER" | "STAFF" | "ADMIN"
       business_category:
         | "RESTAURANT"
         | "RETAIL"
@@ -723,6 +847,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["CONSUMER", "BUSINESS_OWNER", "STAFF", "ADMIN"],
       business_category: [
         "RESTAURANT",
         "RETAIL",
