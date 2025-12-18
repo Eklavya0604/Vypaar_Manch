@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Building2, Search, MapPin, Star, Filter, CheckCircle, 
+  Building2, Search, MapPin, Star, CheckCircle, 
   Grid3X3, List, ChevronLeft, SlidersHorizontal
 } from 'lucide-react';
 
@@ -53,9 +52,14 @@ const sortOptions = [
   { value: 'name', label: 'Name A-Z' },
 ];
 
+type BusinessCategory = 'RESTAURANT' | 'RETAIL' | 'HEALTHCARE' | 'BEAUTY' | 'FITNESS' | 
+  'HOME_SERVICES' | 'AUTOMOTIVE' | 'PROFESSIONAL' | 'EDUCATION' | 'ENTERTAINMENT' | 
+  'TECHNOLOGY' | 'REAL_ESTATE' | 'FINANCIAL' | 'OTHER';
+
 export default function Discover() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
@@ -76,7 +80,7 @@ export default function Discover() {
       .eq('is_active', true);
 
     if (selectedCategory && selectedCategory !== 'all') {
-      query = query.eq('category', selectedCategory);
+      query = query.eq('category', selectedCategory as BusinessCategory);
     }
 
     if (selectedCity) {
@@ -104,6 +108,7 @@ export default function Discover() {
     if (error) {
       console.error('Error fetching businesses:', error);
     } else {
+      setAllBusinesses(data || []);
       setBusinesses(data || []);
     }
     
@@ -112,15 +117,15 @@ export default function Discover() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Filter businesses client-side for now
+    // Filter businesses client-side
     if (searchQuery) {
-      const filtered = businesses.filter(b => 
+      const filtered = allBusinesses.filter(b => 
         b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         b.description?.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setBusinesses(filtered);
     } else {
-      fetchBusinesses();
+      setBusinesses(allBusinesses);
     }
   };
 
@@ -154,7 +159,7 @@ export default function Discover() {
                 <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </Link>
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-gradient-primary rounded-lg flex items-center justify-center">
+                <div className="w-9 h-9 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
                   <Building2 className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <span className="text-xl font-bold text-foreground hidden sm:block">BizConnect</span>

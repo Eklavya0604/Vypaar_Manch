@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Building2, ChevronLeft, Upload, MapPin, Phone, Mail, Globe, MessageCircle } from 'lucide-react';
+import { Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle } from 'lucide-react';
 
 const categoryOptions = [
   { value: 'RESTAURANT', label: 'Restaurant' },
@@ -28,6 +28,10 @@ const categoryOptions = [
   { value: 'OTHER', label: 'Other' },
 ];
 
+type BusinessCategory = 'RESTAURANT' | 'RETAIL' | 'HEALTHCARE' | 'BEAUTY' | 'FITNESS' | 
+  'HOME_SERVICES' | 'AUTOMOTIVE' | 'PROFESSIONAL' | 'EDUCATION' | 'ENTERTAINMENT' | 
+  'TECHNOLOGY' | 'REAL_ESTATE' | 'FINANCIAL' | 'OTHER';
+
 export default function CreateBusiness() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -35,7 +39,7 @@ export default function CreateBusiness() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
+    category: '' as BusinessCategory | '',
     description: '',
     contact_email: '',
     contact_phone: '',
@@ -73,12 +77,12 @@ export default function CreateBusiness() {
 
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('businesses')
       .insert({
         owner_id: profile.id,
         name: formData.name.trim(),
-        category: formData.category,
+        category: formData.category as BusinessCategory,
         description: formData.description.trim() || null,
         contact_email: formData.contact_email.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
@@ -89,9 +93,7 @@ export default function CreateBusiness() {
         city: formData.city.trim(),
         state: formData.state.trim(),
         pincode: formData.pincode.trim() || null,
-      })
-      .select()
-      .single();
+      });
 
     setLoading(false);
 
@@ -115,7 +117,7 @@ export default function CreateBusiness() {
                 <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </Link>
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-gradient-primary rounded-lg flex items-center justify-center">
+                <div className="w-9 h-9 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
                   <Building2 className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <span className="text-xl font-bold text-foreground">BizConnect</span>
@@ -133,7 +135,7 @@ export default function CreateBusiness() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <Card className="animate-slide-up stagger-1">
+          <Card className="animate-slide-up">
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
               <CardDescription>Tell us about your business</CardDescription>
@@ -180,7 +182,7 @@ export default function CreateBusiness() {
           </Card>
 
           {/* Location */}
-          <Card className="animate-slide-up stagger-2">
+          <Card className="animate-slide-up">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
@@ -245,7 +247,7 @@ export default function CreateBusiness() {
           </Card>
 
           {/* Contact Information */}
-          <Card className="animate-slide-up stagger-3">
+          <Card className="animate-slide-up">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Phone className="h-5 w-5" />

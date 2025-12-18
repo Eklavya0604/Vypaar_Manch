@@ -34,7 +34,7 @@ interface Business {
   city: string;
   state: string;
   pincode: string | null;
-  operating_hours: Record<string, unknown> | null;
+  operating_hours: unknown;
   is_verified: boolean;
   is_premium: boolean;
   average_rating: number;
@@ -111,7 +111,7 @@ export default function BusinessProfile() {
       businessData = byIdData;
     }
 
-    setBusiness(businessData);
+    setBusiness(businessData as unknown as Business);
 
     // Fetch services
     const { data: servicesData } = await supabase
@@ -254,7 +254,7 @@ export default function BusinessProfile() {
                 <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </Link>
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-gradient-primary rounded-lg flex items-center justify-center">
+                <div className="w-9 h-9 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
                   <Building2 className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <span className="text-xl font-bold text-foreground hidden sm:block">BizConnect</span>
@@ -297,7 +297,7 @@ export default function BusinessProfile() {
                     className="w-20 h-20 rounded-xl object-cover border border-border"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-xl bg-gradient-primary flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-xl bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
                     <Building2 className="h-10 w-10 text-primary-foreground" />
                   </div>
                 )}
@@ -343,7 +343,7 @@ export default function BusinessProfile() {
 
             {/* Description */}
             {business.description && (
-              <Card className="animate-slide-up stagger-1">
+              <Card className="animate-slide-up">
                 <CardHeader>
                   <CardTitle>About</CardTitle>
                 </CardHeader>
@@ -355,7 +355,7 @@ export default function BusinessProfile() {
 
             {/* Services */}
             {services.length > 0 && (
-              <Card className="animate-slide-up stagger-2">
+              <Card className="animate-slide-up">
                 <CardHeader>
                   <CardTitle>Services</CardTitle>
                 </CardHeader>
@@ -401,7 +401,7 @@ export default function BusinessProfile() {
             )}
 
             {/* Reviews */}
-            <Card className="animate-slide-up stagger-3">
+            <Card className="animate-slide-up">
               <CardHeader>
                 <CardTitle>Reviews ({business.total_reviews})</CardTitle>
               </CardHeader>
