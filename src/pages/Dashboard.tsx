@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { 
   Building2, Plus, Eye, Phone, Star, MessageSquare, Clock,
   CheckCircle, XCircle, TrendingUp, Calendar, Settings,
-  ChevronRight, BarChart3, Users, AlertCircle
+  ChevronRight, BarChart3, Users, AlertCircle, QrCode
 } from 'lucide-react';
 
 interface Business {
@@ -503,6 +503,14 @@ export default function Dashboard() {
                         Add New Business
                       </Button>
                     </Link>
+                    {selectedBusiness && (
+                      <Link to={`/business/${selectedBusiness.id}/edit`}>
+                        <Button variant="outline" className="w-full justify-start">
+                          <QrCode className="h-4 w-4 mr-2" />
+                          Download QR Code
+                        </Button>
+                      </Link>
+                    )}
                     <Button variant="outline" className="w-full justify-start" disabled>
                       <BarChart3 className="h-4 w-4 mr-2" />
                       View Analytics

@@ -29,9 +29,24 @@ export default function Auth() {
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   useEffect(() => {
-    if (user && !loading) {
-      navigate('/');
-    }
+    const checkRoleAndRedirect = async () => {
+      if (user && !loading) {
+        // Fetch user profile to determine role
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileData?.role === 'BUSINESS_OWNER') {
+          navigate('/dashboard');
+        } else {
+          navigate('/discover');
+        }
+      }
+    };
+    
+    checkRoleAndRedirect();
   }, [user, loading, navigate]);
 
   const validateEmail = (email: string) => {
@@ -70,7 +85,18 @@ export default function Auth() {
       toast.error(error.message || 'Failed to sign in');
     } else {
       toast.success('Welcome back!');
-      navigate('/');
+      // Fetch role and redirect accordingly
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (profileData?.role === 'BUSINESS_OWNER') {
+        navigate('/dashboard');
+      } else {
+        navigate('/discover');
+      }
     }
   };
 
@@ -117,8 +143,9 @@ export default function Auth() {
       return;
     }
 
-    // Create profile after signup
+    // Create profile and role after signup
     if (data.user) {
+      // Create user profile
       const { error: profileError } = await supabase
         .from('user_profiles')
         .insert({
@@ -131,11 +158,29 @@ export default function Auth() {
       if (profileError) {
         console.error('Error creating profile:', profileError);
       }
+
+      // Insert into user_roles table for secure role management
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: data.user.id,
+          role: selectedRole,
+        });
+
+      if (roleError) {
+        console.error('Error creating user role:', roleError);
+      }
     }
 
     setIsLoading(false);
     toast.success('Account created! Welcome to BizConnect.');
-    navigate('/');
+    
+    // Role-based redirect
+    if (selectedRole === 'BUSINESS_OWNER') {
+      navigate('/dashboard');
+    } else {
+      navigate('/discover');
+    }
   };
 
   const handleMagicLink = async (e: React.FormEvent) => {

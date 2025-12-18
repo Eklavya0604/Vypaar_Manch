@@ -123,6 +123,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (profileError) {
         console.error('Error creating profile:', profileError);
       }
+
+      // Insert into user_roles table for secure role management
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: data.user.id,
+          role: 'CONSUMER', // Default role
+        });
+
+      if (roleError) {
+        console.error('Error creating user role:', roleError);
+      }
     }
 
     return { error: null };

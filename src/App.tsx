@@ -10,6 +10,7 @@ import Discover from "./pages/Discover";
 import BusinessProfile from "./pages/BusinessProfile";
 import Dashboard from "./pages/Dashboard";
 import CreateBusiness from "./pages/CreateBusiness";
+import EditBusiness from "./pages/EditBusiness";
 import ConsumerHome from "./pages/ConsumerHome";
 import OwnerHome from "./pages/OwnerHome";
 import MapView from "./pages/MapView";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/map" element={<MapView />} />
             <Route path="/business/:slug" element={<BusinessProfile />} />
             <Route path="/business/new" element={<CreateBusiness />} />
+            <Route path="/business/:id/edit" element={<EditBusiness />} />
             <Route path="/dashboard" element={<Dashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
