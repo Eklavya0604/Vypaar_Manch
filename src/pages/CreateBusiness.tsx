@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle } from 'lucide-react';
+import LocationPicker from '@/components/map/LocationPicker';
 
 const categoryOptions = [
   { value: 'RESTAURANT', label: 'Restaurant' },
@@ -50,7 +51,13 @@ export default function CreateBusiness() {
     city: '',
     state: '',
     pincode: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
+
+  const handleLocationSelect = (location: { lat: number; lng: number; address?: string }) => {
+    setFormData(prev => ({ ...prev, latitude: location.lat, longitude: location.lng }));
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -93,6 +100,8 @@ export default function CreateBusiness() {
         city: formData.city.trim(),
         state: formData.state.trim(),
         pincode: formData.pincode.trim() || null,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
       });
 
     setLoading(false);
@@ -242,6 +251,18 @@ export default function CreateBusiness() {
                   value={formData.pincode}
                   onChange={(e) => handleChange('pincode', e.target.value)}
                 />
+              </div>
+
+              {/* Map Location Picker */}
+              <div className="space-y-2">
+                <Label>Pin Location on Map</Label>
+                <p className="text-sm text-muted-foreground mb-2">Click on the map to set your exact business location</p>
+                <LocationPicker onLocationSelect={handleLocationSelect} />
+                {formData.latitude && formData.longitude && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Selected: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
