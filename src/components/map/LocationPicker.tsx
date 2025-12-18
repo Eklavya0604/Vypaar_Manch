@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MapPin, Navigation, Search, Loader2 } from 'lucide-react';
@@ -13,22 +13,89 @@ export default function LocationPicker({ initialLocation, onLocationSelect }: Lo
     initialLocation || null
   );
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
-    initialLocation || { lat: 19.0760, lng: 72.8777 } // Default to Mumbai
+    initialLocation || { lat: 19.0760, lng: 72.8777 }
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [isLocating, setIsLocating] = useState(false);
-  const [MapComponents, setMapComponents] = useState<React.ComponentType<any> | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
 
-  // Dynamic import to avoid SSR/context issues with react-leaflet
+  // Initialize map on mount
   useEffect(() => {
-    import('./MapComponents').then((mod) => {
-      setMapComponents(() => mod.default);
-    });
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
+
+    const initMap = async () => {
+      const L = await import('leaflet');
+      await import('leaflet/dist/leaflet.css');
+      
+      leafletRef.current = L.default;
+      
+      // Fix default marker icon
+      delete (L.default.Icon.Default.prototype as any)._getIconUrl;
+      L.default.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      });
+
+      const map = L.default.map(mapContainerRef.current!).setView(
+        [mapCenter.lat, mapCenter.lng],
+        13
+      );
+
+      L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+
+      if (position) {
+        markerRef.current = L.default.marker([position.lat, position.lng]).addTo(map);
+      }
+
+      map.on('click', (e: any) => {
+        const newPos = { lat: e.latlng.lat, lng: e.latlng.lng };
+        setPosition(newPos);
+        onLocationSelect(newPos);
+        
+        if (markerRef.current) {
+          markerRef.current.setLatLng([newPos.lat, newPos.lng]);
+        } else {
+          markerRef.current = L.default.marker([newPos.lat, newPos.lng]).addTo(map);
+        }
+      });
+
+      mapInstanceRef.current = map;
+      setIsMapReady(true);
+    };
+
+    initMap();
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
   }, []);
 
-  const handlePositionChange = (newPos: { lat: number; lng: number }) => {
-    setPosition(newPos);
-    onLocationSelect(newPos);
+  // Update map view when center changes
+  useEffect(() => {
+    if (mapInstanceRef.current && isMapReady) {
+      mapInstanceRef.current.setView([mapCenter.lat, mapCenter.lng], 15);
+    }
+  }, [mapCenter, isMapReady]);
+
+  const updateMarker = (newPos: { lat: number; lng: number }) => {
+    if (!mapInstanceRef.current || !leafletRef.current) return;
+    
+    if (markerRef.current) {
+      markerRef.current.setLatLng([newPos.lat, newPos.lng]);
+    } else {
+      markerRef.current = leafletRef.current.marker([newPos.lat, newPos.lng]).addTo(mapInstanceRef.current);
+    }
+    mapInstanceRef.current.setView([newPos.lat, newPos.lng], 15);
   };
 
   const handleUseCurrentLocation = () => {
@@ -40,6 +107,7 @@ export default function LocationPicker({ initialLocation, onLocationSelect }: Lo
           setPosition(newPos);
           setMapCenter(newPos);
           onLocationSelect(newPos);
+          updateMarker(newPos);
           setIsLocating(false);
         },
         (error) => {
@@ -68,6 +136,7 @@ export default function LocationPicker({ initialLocation, onLocationSelect }: Lo
         setPosition(newPos);
         setMapCenter(newPos);
         onLocationSelect({ ...newPos, address: data[0].display_name });
+        updateMarker(newPos);
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -100,17 +169,13 @@ export default function LocationPicker({ initialLocation, onLocationSelect }: Lo
       </div>
 
       <div className="h-[300px] rounded-lg overflow-hidden border border-border">
-        {MapComponents ? (
-          <MapComponents
-            mapCenter={mapCenter}
-            position={position}
-            onPositionChange={handlePositionChange}
-          />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center bg-muted">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        )}
+        <div ref={mapContainerRef} className="h-full w-full">
+          {!isMapReady && (
+            <div className="h-full w-full flex items-center justify-center bg-muted">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
       </div>
 
       {position && (
