@@ -355,7 +355,7 @@ export default function Index() {
                 <span className="text-lg font-bold text-background">BizConnect</span>
               </div>
               <p className="text-muted text-sm">
-                Connecting businesses with customers since 2024
+                Connecting businesses with customers since 2025
               </p>
             </div>
             

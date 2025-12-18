@@ -12,10 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import LocationPicker from '@/components/map/LocationPicker';
+import ImageUpload from '@/components/ImageUpload';
 import { downloadQRCode, generateQRCodeDataUrl } from '@/utils/qrcode';
 import { 
   Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle,
-  Plus, Trash2, Save, QrCode, Download, Eye, Image
+  Plus, Trash2, Save, QrCode, Download, Eye, Image, Link as LinkIcon, Briefcase
 } from 'lucide-react';
 
 const categoryOptions = [
@@ -68,6 +69,7 @@ export default function EditBusiness() {
     contact_phone: '',
     whatsapp_link: '',
     website_url: '',
+    portfolio_url: '',
     address_line1: '',
     address_line2: '',
     city: '',
@@ -77,6 +79,8 @@ export default function EditBusiness() {
     longitude: null as number | null,
     is_active: true,
     slug: '',
+    logo_url: null as string | null,
+    cover_image_url: null as string | null,
   });
 
   useEffect(() => {
@@ -108,6 +112,7 @@ export default function EditBusiness() {
       contact_phone: data.contact_phone || '',
       whatsapp_link: data.whatsapp_link || '',
       website_url: data.website_url || '',
+      portfolio_url: data.portfolio_url || '',
       address_line1: data.address_line1 || '',
       address_line2: data.address_line2 || '',
       city: data.city,
@@ -117,6 +122,8 @@ export default function EditBusiness() {
       longitude: data.longitude,
       is_active: data.is_active ?? true,
       slug: data.slug || '',
+      logo_url: data.logo_url || null,
+      cover_image_url: data.cover_image_url || null,
     });
 
     // Generate QR code
@@ -174,6 +181,7 @@ export default function EditBusiness() {
         contact_phone: formData.contact_phone.trim() || null,
         whatsapp_link: formData.whatsapp_link.trim() || null,
         website_url: formData.website_url.trim() || null,
+        portfolio_url: formData.portfolio_url.trim() || null,
         address_line1: formData.address_line1.trim() || null,
         address_line2: formData.address_line2.trim() || null,
         city: formData.city.trim(),
@@ -182,6 +190,8 @@ export default function EditBusiness() {
         latitude: formData.latitude,
         longitude: formData.longitude,
         is_active: formData.is_active,
+        logo_url: formData.logo_url,
+        cover_image_url: formData.cover_image_url,
       })
       .eq('id', id);
 
@@ -310,6 +320,41 @@ export default function EditBusiness() {
 
           <TabsContent value="details">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="h-5 w-5" />
+                    Business Images
+                  </CardTitle>
+                  <CardDescription>Upload your logo and cover banner to make your business stand out</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <ImageUpload
+                      currentImage={formData.logo_url}
+                      onUpload={(url) => handleChange('logo_url', url)}
+                      onRemove={() => handleChange('logo_url', null)}
+                      bucket="business-gallery"
+                      folder={`logos/${id}`}
+                      aspectRatio="square"
+                      label="Business Logo"
+                    />
+                    <div className="md:col-span-1">
+                      <ImageUpload
+                        currentImage={formData.cover_image_url}
+                        onUpload={(url) => handleChange('cover_image_url', url)}
+                        onRemove={() => handleChange('cover_image_url', null)}
+                        bucket="business-gallery"
+                        folder={`banners/${id}`}
+                        aspectRatio="banner"
+                        label="Cover Banner"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Basic Information */}
               <Card>
                 <CardHeader>
@@ -409,15 +454,33 @@ export default function EditBusiness() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Website</Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={formData.website_url}
-                        onChange={(e) => handleChange('website_url', e.target.value)}
-                        className="pl-10"
-                      />
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Website</Label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={formData.website_url}
+                          onChange={(e) => handleChange('website_url', e.target.value)}
+                          className="pl-10"
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Portfolio / Work Samples Link</Label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={formData.portfolio_url}
+                          onChange={(e) => handleChange('portfolio_url', e.target.value)}
+                          className="pl-10"
+                          placeholder="https://behance.net/yourwork"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        For freelancers: Add links to Behance, Dribbble, GitHub, or your portfolio site
+                      </p>
                     </div>
                   </div>
                 </CardContent>
