@@ -126,6 +126,7 @@ export type Database = {
           operating_hours: Json | null
           owner_id: string
           pincode: string | null
+          portfolio_url: string | null
           qr_code_url: string | null
           slug: string | null
           state: string
@@ -157,6 +158,7 @@ export type Database = {
           operating_hours?: Json | null
           owner_id: string
           pincode?: string | null
+          portfolio_url?: string | null
           qr_code_url?: string | null
           slug?: string | null
           state: string
@@ -188,6 +190,7 @@ export type Database = {
           operating_hours?: Json | null
           owner_id?: string
           pincode?: string | null
+          portfolio_url?: string | null
           qr_code_url?: string | null
           slug?: string | null
           state?: string

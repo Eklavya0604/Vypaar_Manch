@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle } from 'lucide-react';
+import { Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle, Briefcase } from 'lucide-react';
 import LocationPicker from '@/components/map/LocationPicker';
 
 const categoryOptions = [
@@ -46,6 +46,7 @@ export default function CreateBusiness() {
     contact_phone: '',
     whatsapp_link: '',
     website_url: '',
+    portfolio_url: '',
     address_line1: '',
     address_line2: '',
     city: '',
@@ -95,6 +96,7 @@ export default function CreateBusiness() {
         contact_phone: formData.contact_phone.trim() || null,
         whatsapp_link: formData.whatsapp_link.trim() || null,
         website_url: formData.website_url.trim() || null,
+        portfolio_url: formData.portfolio_url.trim() || null,
         address_line1: formData.address_line1.trim() || null,
         address_line2: formData.address_line2.trim() || null,
         city: formData.city.trim(),
@@ -323,17 +325,33 @@ export default function CreateBusiness() {
                 <p className="text-xs text-muted-foreground">Format: https://wa.me/[country code][phone number]</p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="website_url">Website</Label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="website_url"
-                    placeholder="https://www.yourbusiness.com"
-                    value={formData.website_url}
-                    onChange={(e) => handleChange('website_url', e.target.value)}
-                    className="pl-10"
-                  />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="website_url">Website</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="website_url"
+                      placeholder="https://www.yourbusiness.com"
+                      value={formData.website_url}
+                      onChange={(e) => handleChange('website_url', e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="portfolio_url">Portfolio / Work Samples</Label>
+                  <div className="relative">
+                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="portfolio_url"
+                      placeholder="https://behance.net/yourwork"
+                      value={formData.portfolio_url}
+                      onChange={(e) => handleChange('portfolio_url', e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">For freelancers: Add links to Behance, Dribbble, GitHub, etc.</p>
                 </div>
               </div>
             </CardContent>

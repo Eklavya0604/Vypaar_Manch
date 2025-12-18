@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { 
   Building2, Star, MapPin, Phone, Mail, Globe, MessageCircle,
   ChevronLeft, CheckCircle, Clock, Calendar, Share2, Heart,
-  Send, ExternalLink
+  Send, ExternalLink, Briefcase
 } from 'lucide-react';
 
 interface Business {
@@ -29,6 +29,7 @@ interface Business {
   contact_phone: string | null;
   whatsapp_link: string | null;
   website_url: string | null;
+  portfolio_url: string | null;
   address_line1: string | null;
   address_line2: string | null;
   city: string;
@@ -495,6 +496,20 @@ export default function BusinessProfile() {
                     <a href={business.website_url} target="_blank" rel="noopener noreferrer">
                       <Globe className="h-4 w-4 mr-2" />
                       Visit Website
+                      <ExternalLink className="h-3 w-3 ml-auto" />
+                    </a>
+                  </Button>
+                )}
+
+                {business.portfolio_url && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    asChild
+                  >
+                    <a href={business.portfolio_url} target="_blank" rel="noopener noreferrer">
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      View Portfolio
                       <ExternalLink className="h-3 w-3 ml-auto" />
                     </a>
                   </Button>
