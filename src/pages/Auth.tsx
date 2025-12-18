@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,23 +14,25 @@ import { z } from 'zod';
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
+type UserRole = 'CONSUMER' | 'BUSINESS_OWNER';
+
 export default function Auth() {
   const navigate = useNavigate();
-  const { signUp, signIn, signInWithMagicLink, user, loading } = useAuth();
+  const { user, loading } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'CONSUMER' | 'BUSINESS_OWNER' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  // Redirect if already logged in
-  if (user && !loading) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   const validateEmail = (email: string) => {
     const result = emailSchema.safeParse(email);
@@ -55,7 +58,12 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    const { error } = await signIn(email, password);
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
     setIsLoading(false);
 
     if (error) {
@@ -85,19 +93,49 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(email, password, fullName);
-    setIsLoading(false);
+    
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
 
     if (error) {
+      setIsLoading(false);
       if (error.message.includes('already registered')) {
         toast.error('This email is already registered. Please sign in instead.');
       } else {
         toast.error(error.message || 'Failed to create account');
       }
-    } else {
-      toast.success('Account created! Welcome to BizConnect.');
-      navigate('/');
+      return;
     }
+
+    // Create profile after signup
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: data.user.id,
+          email: email,
+          full_name: fullName || null,
+          role: selectedRole,
+        });
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+      }
+    }
+
+    setIsLoading(false);
+    toast.success('Account created! Welcome to BizConnect.');
+    navigate('/');
   };
 
   const handleMagicLink = async (e: React.FormEvent) => {
@@ -109,7 +147,14 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    const { error } = await signInWithMagicLink(email);
+    
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+    
     setIsLoading(false);
 
     if (error) {
@@ -129,6 +174,7 @@ export default function Auth() {
       
       <div className="grid gap-4">
         <button
+          type="button"
           onClick={() => setSelectedRole('CONSUMER')}
           className={`p-6 rounded-xl border-2 text-left transition-all duration-200 ${
             selectedRole === 'CONSUMER'
@@ -153,6 +199,7 @@ export default function Auth() {
         </button>
 
         <button
+          type="button"
           onClick={() => setSelectedRole('BUSINESS_OWNER')}
           className={`p-6 rounded-xl border-2 text-left transition-all duration-200 ${
             selectedRole === 'BUSINESS_OWNER'
@@ -178,6 +225,7 @@ export default function Auth() {
       </div>
 
       <Button
+        type="button"
         onClick={() => setShowRoleSelection(false)}
         disabled={!selectedRole}
         className="w-full"
@@ -190,9 +238,17 @@ export default function Auth() {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
   if (magicLinkSent) {
     return (
-      <div className="min-h-screen bg-gradient-surface flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-xl animate-scale-in">
           <CardContent className="pt-8 text-center space-y-4">
             <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto">
@@ -212,11 +268,11 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-surface flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8 animate-slide-up">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-xl flex items-center justify-center">
               <Building2 className="h-6 w-6 text-primary-foreground" />
             </div>
             <span className="text-2xl font-bold text-foreground">BizConnect</span>
