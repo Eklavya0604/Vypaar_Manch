@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle, Briefcase } from 'lucide-react';
 import LocationPicker from '@/components/map/LocationPicker';
+import CascadingLocationSelector from '@/components/CascadingLocationSelector';
 
 const categoryOptions = [
   { value: 'RESTAURANT', label: 'Restaurant' },
@@ -222,28 +223,13 @@ export default function CreateBusiness() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    placeholder="City"
-                    value={formData.city}
-                    onChange={(e) => handleChange('city', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State *</Label>
-                  <Input
-                    id="state"
-                    placeholder="State"
-                    value={formData.state}
-                    onChange={(e) => handleChange('state', e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
+              <CascadingLocationSelector
+                state={formData.state}
+                city={formData.city}
+                onStateChange={(value) => handleChange('state', value)}
+                onCityChange={(value) => handleChange('city', value)}
+                required
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="pincode">Pincode</Label>
