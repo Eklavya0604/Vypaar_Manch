@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import CascadingLocationSelector from '@/components/CascadingLocationSelector';
 import { 
   Building2, Search, MapPin, Star, ChevronRight, 
   Utensils, ShoppingBag, Heart, Scissors, Dumbbell, 
@@ -72,6 +74,17 @@ const stats = [
 export default function Index() {
   const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (selectedState) params.set('state', selectedState);
+    if (selectedCity) params.set('city', selectedCity);
+    navigate(`/discover?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -152,24 +165,33 @@ export default function Index() {
             </p>
 
             {/* Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto animate-slide-up stagger-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  placeholder="Search for businesses or services..." 
-                  className="h-12 pl-12 bg-background/95 border-0 shadow-lg"
+            <div className="flex flex-col gap-4 max-w-3xl mx-auto animate-slide-up stagger-2">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search for businesses or services..." 
+                    className="h-12 pl-12 bg-background/95 border-0 shadow-lg"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                </div>
+                <Button size="lg" variant="accent" className="h-12 px-8" onClick={handleSearch}>
+                  <Search className="h-5 w-5 mr-2" />
+                  Search
+                </Button>
+              </div>
+              <div className="bg-background/95 rounded-xl p-3 shadow-lg">
+                <CascadingLocationSelector
+                  state={selectedState}
+                  city={selectedCity}
+                  onStateChange={setSelectedState}
+                  onCityChange={setSelectedCity}
+                  showLabels={false}
+                  compact
                 />
               </div>
-              <div className="relative sm:w-48">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  placeholder="Location" 
-                  className="h-12 pl-12 bg-background/95 border-0 shadow-lg"
-                />
-              </div>
-              <Button size="lg" variant="accent" className="h-12 px-8">
-                Search
-              </Button>
             </div>
 
             {/* Quick Stats */}

@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import LocationPicker from '@/components/map/LocationPicker';
 import ImageUpload from '@/components/ImageUpload';
+import CascadingLocationSelector from '@/components/CascadingLocationSelector';
 import { downloadQRCode, generateQRCodeDataUrl } from '@/utils/qrcode';
 import { 
   Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle,
@@ -509,20 +510,13 @@ export default function EditBusiness() {
                       onChange={(e) => handleChange('address_line2', e.target.value)}
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>City *</Label>
-                      <Input
-                        value={formData.city}
-                        onChange={(e) => handleChange('city', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>State *</Label>
-                      <Input
-                        value={formData.state}
-                        onChange={(e) => handleChange('state', e.target.value)}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="sm:col-span-2">
+                      <CascadingLocationSelector
+                        state={formData.state}
+                        city={formData.city}
+                        onStateChange={(value) => handleChange('state', value)}
+                        onCityChange={(value) => handleChange('city', value)}
                         required
                       />
                     </div>

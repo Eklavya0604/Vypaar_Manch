@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import CascadingLocationSelector from '@/components/CascadingLocationSelector';
 import { 
   Building2, Search, MapPin, Star, CheckCircle, 
   Grid3X3, List, ChevronLeft, SlidersHorizontal, User, LogOut, Map
@@ -66,6 +67,7 @@ export default function Discover() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
+  const [selectedState, setSelectedState] = useState(searchParams.get('state') || '');
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || '');
   const [sortBy, setSortBy] = useState('rating');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -77,7 +79,7 @@ export default function Discover() {
 
   useEffect(() => {
     fetchBusinesses();
-  }, [selectedCategory, sortBy, selectedCity]);
+  }, [selectedCategory, sortBy, selectedCity, selectedState]);
 
   const fetchBusinesses = async () => {
     setLoading(true);
@@ -89,6 +91,10 @@ export default function Discover() {
 
     if (selectedCategory && selectedCategory !== 'all') {
       query = query.eq('category', selectedCategory as BusinessCategory);
+    }
+
+    if (selectedState) {
+      query = query.ilike('state', `%${selectedState}%`);
     }
 
     if (selectedCity) {
@@ -216,13 +222,14 @@ export default function Discover() {
               />
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative sm:w-48">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
-                <Input 
-                  placeholder="City" 
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="h-12 pl-12"
+              <div className="flex-1">
+                <CascadingLocationSelector
+                  state={selectedState}
+                  city={selectedCity}
+                  onStateChange={setSelectedState}
+                  onCityChange={setSelectedCity}
+                  showLabels={false}
+                  compact
                 />
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -309,7 +316,7 @@ export default function Discover() {
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">No businesses found</h3>
             <p className="text-muted-foreground mb-6">Try adjusting your search or filters</p>
-            <Button onClick={() => { setSelectedCategory('all'); setSearchQuery(''); setSelectedCity(''); }}>
+            <Button onClick={() => { setSelectedCategory('all'); setSearchQuery(''); setSelectedCity(''); setSelectedState(''); }}>
               Clear Filters
             </Button>
           </div>

@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import CascadingLocationSelector from '@/components/CascadingLocationSelector';
+import { getStates, getCitiesByState, findStateCodeByName } from '@/data/indiaLocations';
 import { 
   Building2, Search, MapPin, ArrowLeft, Filter,
   Star, Navigation, X
@@ -54,6 +56,8 @@ export default function MapView() {
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [category, setCategory] = useState(searchParams.get('category') || 'All Categories');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [radius, setRadius] = useState([10]); // km
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -82,6 +86,14 @@ export default function MapView() {
     if (category && category !== 'All Categories') {
       const categoryValue = category.toUpperCase().replace(' ', '_') as any;
       query = query.eq('category', categoryValue);
+    }
+
+    if (selectedState) {
+      query = query.ilike('state', `%${selectedState}%`);
+    }
+
+    if (selectedCity) {
+      query = query.ilike('city', `%${selectedCity}%`);
     }
 
     const { data, error } = await query.limit(100);
@@ -221,7 +233,19 @@ export default function MapView() {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+              </Select>
+              </div>
+
+              <div className="flex-1 min-w-[300px]">
+                <label className="text-sm font-medium text-foreground mb-1 block">Location</label>
+                <CascadingLocationSelector
+                  state={selectedState}
+                  city={selectedCity}
+                  onStateChange={(val) => { setSelectedState(val); }}
+                  onCityChange={(val) => { setSelectedCity(val); }}
+                  showLabels={false}
+                  compact
+                />
               </div>
 
               <div className="w-48">
