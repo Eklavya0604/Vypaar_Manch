@@ -16,6 +16,7 @@ import {
   ChevronLeft, CheckCircle, Clock, Calendar, Share2, Heart,
   Send, ExternalLink, Briefcase
 } from 'lucide-react';
+import { ReviewsSection } from '@/components/ReviewsSection';
 
 interface Business {
   id: string;
@@ -61,6 +62,7 @@ interface Review {
   owner_response: string | null;
   created_at: string;
   consumer_id: string | null;
+  is_verified?: boolean;
 }
 
 export default function BusinessProfile() {
@@ -401,49 +403,15 @@ export default function BusinessProfile() {
               </Card>
             )}
 
-            {/* Reviews */}
-            <Card className="animate-slide-up">
-              <CardHeader>
-                <CardTitle>Reviews ({business.total_reviews})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {reviews.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No reviews yet</p>
-                ) : (
-                  <div className="space-y-6">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="border-b border-border pb-6 last:border-0 last:pb-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`h-4 w-4 ${i < review.rating ? 'text-warning fill-warning' : 'text-muted'}`} 
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(review.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        {review.title && (
-                          <h5 className="font-medium text-foreground">{review.title}</h5>
-                        )}
-                        {review.content && (
-                          <p className="text-muted-foreground mt-1">{review.content}</p>
-                        )}
-                        {review.owner_response && (
-                          <div className="mt-3 p-3 bg-secondary rounded-lg">
-                            <p className="text-sm font-medium text-foreground mb-1">Owner Response:</p>
-                            <p className="text-sm text-muted-foreground">{review.owner_response}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Reviews Section */}
+            <ReviewsSection
+              businessId={business.id}
+              reviews={reviews}
+              averageRating={business.average_rating}
+              totalReviews={business.total_reviews}
+              onReviewSubmitted={fetchBusiness}
+              canReview={!!profile}
+            />
           </div>
 
           {/* Sidebar */}
