@@ -209,6 +209,22 @@ export default function Auth() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sign in with Google');
+      setIsLoading(false);
+    }
+  };
+
   const RoleSelectionStep = () => (
     <div className="space-y-6 animate-fade-in">
       <div className="text-center space-y-2">
@@ -530,17 +546,30 @@ export default function Auth() {
                 </div>
               </div>
 
-              <form onSubmit={handleMagicLink}>
+              <div className="flex flex-col gap-3">
+                <form onSubmit={handleMagicLink}>
+                  <Button 
+                    type="submit" 
+                    variant="outline" 
+                    className="w-full h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-semibold" 
+                    disabled={isLoading || !email}
+                  >
+                    <Sparkles className="h-5 w-5 mr-2 text-emerald-500" />
+                    Continue with Magic Link
+                  </Button>
+                </form>
+
                 <Button 
-                  type="submit" 
+                  type="button" 
                   variant="outline" 
-                  className="w-full h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold" 
-                  disabled={isLoading || !email}
+                  onClick={handleGoogleSignIn}
+                  className="w-full h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-semibold" 
+                  disabled={isLoading}
                 >
-                  <Sparkles className="h-5 w-5 mr-2 text-emerald-500" />
-                  Continue with Magic Link
+                  <img src="/SVG/google-logo-search-new-svgrepo-com.svg" alt="Google" className="h-5 w-5 mr-2" />
+                  Continue with Google
                 </Button>
-              </form>
+              </div>
             </TabsContent>
 
             {/* Sign Up Form */}
@@ -631,6 +660,26 @@ export default function Auth() {
                   >
                     {isLoading ? 'Creating account...' : selectedRole ? 'Create Account' : 'Continue'}
                     {!isLoading && <ArrowRight className="h-5 w-5 ml-2" />}
+                  </Button>
+
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-slate-200" />
+                    </div>
+                    <div className="relative flex justify-center text-xs font-bold text-slate-400">
+                      <span className="bg-white px-4">OR</span>
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleGoogleSignIn}
+                    className="w-full h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-semibold" 
+                    disabled={isLoading}
+                  >
+                    <img src="/SVG/google-logo-search-new-svgrepo-com.svg" alt="Google" className="h-5 w-5 mr-2" />
+                    Sign up with Google
                   </Button>
                 </form>
               )}
