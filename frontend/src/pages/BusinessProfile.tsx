@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,60 +89,19 @@ export default function BusinessProfile() {
   const fetchBusiness = async () => {
     setLoading(true);
     
-    // Try to find by slug first, then by ID
-    let { data: businessData, error } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
+    try {
+      const { data } = await api.get(`/businesses/${slug}`);
+      setBusiness(data);
+      setServices(data.services || []);
+      setReviews(data.reviews || []);
 
-    if (error || !businessData) {
-      // Try by ID
-      const { data: byIdData, error: byIdError } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('id', slug)
-        .eq('is_active', true)
-        .single();
-      
-      if (byIdError || !byIdData) {
-        toast.error('Business not found');
-        navigate('/discover');
-        return;
-      }
-      businessData = byIdData;
+      // Record view
+      await api.post(`/businesses/${data.id}/views`);
+    } catch (error) {
+      console.error(error);
+      toast.error('Business not found');
+      navigate('/discover');
     }
-
-    setBusiness(businessData as unknown as Business);
-
-    // Fetch services
-    const { data: servicesData } = await supabase
-      .from('services')
-      .select('*')
-      .eq('business_id', businessData.id)
-      .eq('is_active', true)
-      .eq('is_available', true);
-
-    setServices(servicesData || []);
-
-    // Fetch reviews
-    const { data: reviewsData } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('business_id', businessData.id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    setReviews(reviewsData || []);
-
-    // Record view
-    await supabase.from('business_views').insert({
-      business_id: businessData.id,
-      visitor_id: profile?.id || null,
-      device_type: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
-    });
 
     setLoading(false);
   };
@@ -150,12 +109,11 @@ export default function BusinessProfile() {
   const handleContactClick = async (type: 'CALL' | 'WHATSAPP' | 'EMAIL') => {
     if (!business) return;
 
-    // Log the contact
-    await supabase.from('contact_logs').insert({
-      business_id: business.id,
-      consumer_id: profile?.id || null,
-      contact_type: type,
-    });
+    try {
+      await api.post(`/businesses/${business.id}/contacts`);
+    } catch (e) {
+      console.error(e);
+    }
 
     switch (type) {
       case 'CALL':
@@ -182,28 +140,24 @@ export default function BusinessProfile() {
       return;
     }
 
-    setSubmitting(true);
+    try {
+      await api.post(`/businesses/${business.id}/service-requests`, {
+        serviceId: selectedService?.id || null,
+        consumerId: profile.id,
+        description: requestDescription,
+        consumerPhone: requestPhone || profile.phone,
+        consumerEmail: profile.email,
+      });
 
-    const { error } = await supabase.from('service_requests').insert({
-      business_id: business.id,
-      service_id: selectedService?.id || null,
-      consumer_id: profile.id,
-      description: requestDescription,
-      consumer_phone: requestPhone || profile.phone,
-      consumer_email: profile.email,
-      contact_consent: true,
-    });
-
-    setSubmitting(false);
-
-    if (error) {
-      toast.error('Failed to submit request');
-      console.error(error);
-    } else {
       toast.success('Request submitted successfully!');
       setShowRequestForm(false);
       setRequestDescription('');
       setSelectedService(null);
+    } catch (error) {
+      toast.error('Failed to submit request');
+      console.error(error);
+    } finally {
+      setSubmitting(false);
     }
   };
 

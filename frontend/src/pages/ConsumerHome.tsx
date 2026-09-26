@@ -39,7 +39,7 @@ interface Business {
 }
 
 export default function ConsumerHome() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, updateRole } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
@@ -114,6 +114,18 @@ export default function ConsumerHome() {
               <Link to="/map" className="text-muted-foreground hover:text-foreground transition-colors">
                 Map View
               </Link>
+              <Button 
+                variant="ghost" 
+                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium"
+                onClick={async () => {
+                  const { error } = await updateRole('BUSINESS_OWNER');
+                  if (!error) {
+                    navigate('/dashboard');
+                  }
+                }}
+              >
+                Become a Business Owner
+              </Button>
               <Link to="/favorites" className="text-muted-foreground hover:text-foreground transition-colors">
                 <Heart className="h-5 w-5" />
               </Link>
@@ -142,7 +154,7 @@ export default function ConsumerHome() {
         <div className="section-container">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground">
-              Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}! 👋
+              Welcome back, {(profile as any)?.fullName?.split(' ')[0] || profile?.full_name?.split(' ')[0] || 'there'}!
             </h1>
             <p className="text-primary-foreground/80">
               Find the best services near you

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Building2, User, Mail, Lock, ArrowRight, Sparkles, CheckCircle2, MapPin, Store, Star, Users, Eye } from 'lucide-react';
 import { z } from 'zod';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -24,28 +24,16 @@ export default function Auth() {
   const [fullName, setFullName] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showRoleSelection, setShowRoleSelection] = useState(false);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [showRoleSelection, setShowRoleSelection] = useState(true);
 
   useEffect(() => {
-    const checkRoleAndRedirect = async () => {
-      if (user && !loading) {
-        // Fetch user profile to determine role
-        const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profileData?.role === 'BUSINESS_OWNER') {
-          navigate('/dashboard');
-        } else {
-          navigate('/discover');
-        }
+    if (user && !loading) {
+      if (user.role === 'BUSINESS_OWNER') {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/consumer', { replace: true });
       }
-    };
-    
-    checkRoleAndRedirect();
+    }
   }, [user, loading, navigate]);
 
   const validateEmail = (email: string) => {
@@ -57,6 +45,8 @@ export default function Auth() {
     const result = passwordSchema.safeParse(password);
     return result.success;
   };
+
+  const { signIn, signUp, googleSignIn } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,10 +63,7 @@ export default function Auth() {
 
     setIsLoading(true);
     
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await signIn(email, password);
     
     setIsLoading(false);
 
@@ -84,18 +71,6 @@ export default function Auth() {
       toast.error(error.message || 'Failed to sign in');
     } else {
       toast.success('Welcome back!');
-      // Fetch role and redirect accordingly
-      const { data: profileData } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (profileData?.role === 'BUSINESS_OWNER') {
-        navigate('/dashboard');
-      } else {
-        navigate('/discover');
-      }
     }
   };
 
@@ -119,111 +94,36 @@ export default function Auth() {
 
     setIsLoading(true);
     
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
+    const { error } = await signUp(email, password, fullName, selectedRole);
 
     if (error) {
       setIsLoading(false);
-      if (error.message.includes('already registered')) {
-        toast.error('This email is already registered. Please sign in instead.');
-      } else {
-        toast.error(error.message || 'Failed to create account');
-      }
+      toast.error(error.message || 'Failed to create account');
       return;
-    }
-
-    // Create profile and role after signup
-    if (data.user) {
-      // Create user profile
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: data.user.id,
-          email: email,
-          full_name: fullName || null,
-          role: selectedRole,
-        });
-
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-      }
-
-      // Insert into user_roles table for secure role management
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: data.user.id,
-          role: selectedRole,
-        });
-
-      if (roleError) {
-        console.error('Error creating user role:', roleError);
-      }
     }
 
     setIsLoading(false);
     toast.success('Account created! Welcome to Vypar Manch.');
-    
-    // Role-based redirect
-    if (selectedRole === 'BUSINESS_OWNER') {
-      navigate('/dashboard');
-    } else {
-      navigate('/discover');
-    }
   };
 
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateEmail(email)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-
-    setIsLoading(true);
-    
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
-    
-    setIsLoading(false);
-
-    if (error) {
-      toast.error(error.message || 'Failed to send magic link');
-    } else {
-      setMagicLinkSent(true);
-      toast.success('Check your email for the magic link!');
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
+  const handleGoogleSignIn = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in with Google');
+      // We pass the access token to our backend, which will verify it and sign in the user
+      const { error } = await googleSignIn(tokenResponse.access_token, selectedRole || 'CONSUMER');
+      
       setIsLoading(false);
+      
+      if (error) {
+        toast.error(error.message || 'Failed to sign in with Google');
+      } else {
+        toast.success('Google Sign-In successful!');
+      }
+    },
+    onError: () => {
+      toast.error('Google Sign-In failed');
     }
-  };
+  });
 
   const RoleSelectionStep = () => (
     <div className="space-y-6 animate-fade-in">
@@ -307,24 +207,6 @@ export default function Auth() {
     );
   }
 
-  if (magicLinkSent) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center space-y-6 animate-scale-in">
-          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
-            <Mail className="h-10 w-10 text-emerald-600" />
-          </div>
-          <h2 className="text-3xl font-bold text-slate-800">Check your email</h2>
-          <p className="text-slate-500 text-lg">
-            We've sent a magic link to <strong className="text-slate-800">{email}</strong>. Click the link in the email to sign in securely.
-          </p>
-          <Button variant="outline" onClick={() => setMagicLinkSent(false)} className="mt-4 border-slate-200 text-slate-600">
-            Use a different email
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans">
@@ -547,22 +429,11 @@ export default function Auth() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <form onSubmit={handleMagicLink}>
-                  <Button 
-                    type="submit" 
-                    variant="outline" 
-                    className="w-full h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-semibold" 
-                    disabled={isLoading || !email}
-                  >
-                    <Sparkles className="h-5 w-5 mr-2 text-emerald-500" />
-                    Continue with Magic Link
-                  </Button>
-                </form>
 
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={handleGoogleSignIn}
+                  onClick={() => handleGoogleSignIn()}
                   className="w-full h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-semibold" 
                   disabled={isLoading}
                 >
@@ -674,7 +545,7 @@ export default function Auth() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={handleGoogleSignIn}
+                    onClick={() => handleGoogleSignIn()}
                     className="w-full h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-semibold" 
                     disabled={isLoading}
                   >

@@ -13,6 +13,7 @@ import {
   CheckCircle, XCircle, TrendingUp, Calendar, Settings,
   ChevronRight, BarChart3, Users, AlertCircle, QrCode
 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface Business {
   id: string;
@@ -82,64 +83,44 @@ export default function Dashboard() {
   }, [selectedBusiness]);
 
   const fetchBusinesses = async () => {
-    const { data, error } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('owner_id', profile!.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching businesses:', error);
-    } else {
+    try {
+      const res = await api.get('/businesses/me');
+      const data = res.data;
+      
       setBusinesses(data || []);
       if (data && data.length > 0) {
         setSelectedBusiness(data[0]);
       }
+    } catch (error) {
+      console.error('Error fetching businesses:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchBusinessData = async () => {
     if (!selectedBusiness) return;
 
-    // Fetch service requests
-    const { data: requestsData } = await supabase
-      .from('service_requests')
-      .select('*, services(name)')
-      .eq('business_id', selectedBusiness.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
+    try {
+      const res = await api.get(`/businesses/${selectedBusiness.id}/data`);
+      const { requests, viewsCount, contactsCount } = res.data;
+      
+      setRequests(requests || []);
+      
+      const newReqs = requests?.filter((r: any) => r.status === 'PENDING').length || 0;
+      const activeJobs = requests?.filter((r: any) => ['ACCEPTED', 'IN_PROGRESS'].includes(r.status)).length || 0;
+      const completedJobs = requests?.filter((r: any) => r.status === 'COMPLETED').length || 0;
 
-    setRequests(requestsData || []);
-
-    // Calculate stats
-    const newReqs = requestsData?.filter(r => r.status === 'PENDING').length || 0;
-    const activeJobs = requestsData?.filter(r => ['ACCEPTED', 'IN_PROGRESS'].includes(r.status)).length || 0;
-    const completedJobs = requestsData?.filter(r => r.status === 'COMPLETED').length || 0;
-
-    // Fetch view count from last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const { count: viewsCount } = await supabase
-      .from('business_views')
-      .select('*', { count: 'exact', head: true })
-      .eq('business_id', selectedBusiness.id)
-      .gte('created_at', thirtyDaysAgo.toISOString());
-
-    const { count: contactsCount } = await supabase
-      .from('contact_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('business_id', selectedBusiness.id)
-      .gte('created_at', thirtyDaysAgo.toISOString());
-
-    setStats({
-      totalViews: viewsCount || selectedBusiness.total_views,
-      totalContacts: contactsCount || 0,
-      newRequests: newReqs,
-      activeJobs,
-      completedJobs,
-    });
+      setStats({
+        totalViews: viewsCount || selectedBusiness.total_views,
+        totalContacts: contactsCount || 0,
+        newRequests: newReqs,
+        activeJobs,
+        completedJobs,
+      });
+    } catch (error) {
+      console.error('Error fetching business data:', error);
+    }
   };
 
   const handleRequestAction = async (requestId: string, action: 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED') => {
@@ -160,16 +141,12 @@ export default function Dashboard() {
         break;
     }
 
-    const { error } = await supabase
-      .from('service_requests')
-      .update(updates)
-      .eq('id', requestId);
-
-    if (error) {
-      toast.error('Failed to update request');
-    } else {
+    try {
+      await api.patch(`/businesses/service-requests/${requestId}`, updates);
       toast.success('Request updated');
       fetchBusinessData();
+    } catch (error) {
+      toast.error('Failed to update request');
     }
   };
 

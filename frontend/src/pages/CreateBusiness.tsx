@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,20 +86,18 @@ export default function CreateBusiness() {
 
     setLoading(true);
 
-    const { error } = await supabase
-      .from('businesses')
-      .insert({
-        owner_id: profile.id,
+    try {
+      await api.post('/businesses', {
         name: formData.name.trim(),
-        category: formData.category as BusinessCategory,
+        category: formData.category,
         description: formData.description.trim() || null,
-        contact_email: formData.contact_email.trim() || null,
-        contact_phone: formData.contact_phone.trim() || null,
-        whatsapp_link: formData.whatsapp_link.trim() || null,
-        website_url: formData.website_url.trim() || null,
-        portfolio_url: formData.portfolio_url.trim() || null,
-        address_line1: formData.address_line1.trim() || null,
-        address_line2: formData.address_line2.trim() || null,
+        contactEmail: formData.contact_email.trim() || null,
+        contactPhone: formData.contact_phone.trim() || null,
+        whatsappLink: formData.whatsapp_link.trim() || null,
+        websiteUrl: formData.website_url.trim() || null,
+        portfolioUrl: formData.portfolio_url.trim() || null,
+        addressLine1: formData.address_line1.trim() || null,
+        addressLine2: formData.address_line2.trim() || null,
         city: formData.city.trim(),
         state: formData.state.trim(),
         pincode: formData.pincode.trim() || null,
@@ -107,14 +105,13 @@ export default function CreateBusiness() {
         longitude: formData.longitude,
       });
 
-    setLoading(false);
-
-    if (error) {
-      console.error('Error creating business:', error);
-      toast.error('Failed to create business');
-    } else {
       toast.success('Business created successfully!');
       navigate('/dashboard');
+    } catch (error) {
+      console.error('Error creating business:', error);
+      toast.error('Failed to create business');
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,0 +1,130 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  fullName  String?
+  role      String   @default("CONSUMER") // BUSINESS_OWNER, CONSUMER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businesses      Business[]
+  serviceRequests ServiceRequest[]
+  reviews         Review[]
+}
+
+model Business {
+  id             String   @id @default(uuid())
+  ownerId        String
+  name           String
+  slug           String   @unique
+  category       String
+  description    String?
+  logoUrl        String?
+  coverImageUrl  String?
+  city           String
+  state          String
+  contactEmail   String?
+  contactPhone   String?
+  whatsappLink   String?
+  websiteUrl     String?
+  portfolioUrl   String?
+  addressLine1   String?
+  addressLine2   String?
+  pincode        String?
+  latitude       Float?
+  longitude      Float?
+  isVerified     Boolean  @default(false)
+  isPremium      Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  averageRating  Float    @default(0.0)
+  totalReviews   Int      @default(0)
+  totalViews     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  owner           User             @relation(fields: [ownerId], references: [id])
+  serviceRequests ServiceRequest[]
+  views           BusinessView[]
+  contactLogs     ContactLog[]
+  services        Service[]
+  reviews         Review[]
+}
+
+model ServiceRequest {
+  id            String   @id @default(uuid())
+  businessId    String
+  consumerId    String?
+  consumerPhone String?
+  consumerEmail String?
+  description   String
+  status        String   @default("PENDING") // PENDING, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED
+  serviceId     String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  acceptedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  business Business @relation(fields: [businessId], references: [id])
+  consumer User?    @relation(fields: [consumerId], references: [id])
+}
+
+model BusinessView {
+  id         String   @id @default(uuid())
+  businessId String
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model ContactLog {
+  id         String   @id @default(uuid())
+  businessId String
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  businessId      String
+  name            String
+  description     String?
+  priceMin        Float?
+  priceMax        Float?
+  durationMinutes Int?
+  isActive        Boolean  @default(true)
+  isAvailable     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  businessId    String
+  consumerId    String?
+  rating        Float
+  title         String?
+  content       String?
+  ownerResponse String?
+  isVerified    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+  consumer User?    @relation(fields: [consumerId], references: [id])
+}

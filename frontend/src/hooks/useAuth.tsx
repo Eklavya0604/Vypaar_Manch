@@ -1,215 +1,129 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
-interface UserProfile {
+interface User {
   id: string;
-  user_id: string;
   email: string;
   full_name: string | null;
-  phone: string | null;
   avatar_url: string | null;
   role: 'CONSUMER' | 'BUSINESS_OWNER' | 'ADMIN';
   is_active: boolean;
+  phone?: string | null;
   created_at: string;
   updated_at: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
-  profile: UserProfile | null;
+  profile: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role: string) => Promise<{ error: Error | null }>;
+  googleSignIn: (token: string, role?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
+  updateRole: (role: 'CONSUMER' | 'BUSINESS_OWNER') => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching profile:', error);
-      return null;
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      if (response.data.user) {
+        setUser(response.data.user);
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-
-    return data as UserProfile | null;
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
-    }
+    await fetchProfile();
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id).then((profileData) => {
-              setProfile(profileData);
-              setLoading(false);
-            }).catch((e) => {
-              console.error(e);
-              setLoading(false);
-            });
-          }, 0);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id).then((profileData) => {
-          setProfile(profileData);
-          setLoading(false);
-        }).catch((e) => {
-          console.error(e);
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    }).catch((e) => {
-      console.error(e);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    fetchProfile();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
-
-    if (error) {
-      return { error };
-    }
-
-    // Create profile after signup
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: data.user.id,
-          email: email,
-          full_name: fullName || null,
-          role: 'CONSUMER', // Default role
-        });
-
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-      }
-
-      // Insert into user_roles table for secure role management
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: data.user.id,
-          role: 'CONSUMER', // Default role
-        });
-
-      if (roleError) {
-        console.error('Error creating user role:', roleError);
-      }
-    }
-
-    return { error: null };
-  };
-
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    return { error };
+    try {
+      const res = await api.post('/auth/login', { email, password });
+      setUser(res.data.user);
+      return { error: null };
+    } catch (error: any) {
+      return { error: new Error(error.response?.data?.error || 'Login failed') };
+    }
   };
 
-  const signInWithMagicLink = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
-    });
+  const signUp = async (email: string, password: string, fullName: string, role: string) => {
+    try {
+      const res = await api.post('/auth/register', { email, password, full_name: fullName, role });
+      setUser(res.data.user);
+      return { error: null };
+    } catch (error: any) {
+      return { error: new Error(error.response?.data?.error || 'Registration failed') };
+    }
+  };
 
-    return { error };
+  const googleSignIn = async (token: string, role?: string) => {
+    try {
+      const res = await api.post('/auth/google', { token, role });
+      setUser(res.data.user);
+      return { error: null };
+    } catch (error: any) {
+      return { error: new Error(error.response?.data?.error || 'Google login failed') };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      await api.post('/auth/logout');
+      setUser(null);
+      toast.success('Logged out successfully');
+    } catch (error) {
+      toast.error('Error logging out');
+    }
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!user) {
-      return { error: new Error('No user logged in') };
+  const updateRole = async (role: 'CONSUMER' | 'BUSINESS_OWNER') => {
+    try {
+      const res = await api.put('/auth/role', { role });
+      if (res.data.user) {
+        setUser(res.data.user);
+        toast.success(`Successfully switched to ${role === 'BUSINESS_OWNER' ? 'Business Owner' : 'Consumer'}`);
+      }
+      return { error: null };
+    } catch (error: any) {
+      const message = error.response?.data?.error || error.message;
+      toast.error(message);
+      return { error: new Error(message) };
     }
-
-    const { error } = await supabase
-      .from('user_profiles')
-      .update(updates)
-      .eq('user_id', user.id);
-
-    if (!error) {
-      await refreshProfile();
-    }
-
-    return { error };
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
-        profile,
+        profile: user,
         loading,
-        signUp,
+        setUser,
         signIn,
-        signInWithMagicLink,
+        signUp,
+        googleSignIn,
         signOut,
-        updateProfile,
         refreshProfile,
+        updateRole,
       }}
     >
       {children}

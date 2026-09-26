@@ -195,7 +195,7 @@ export default function OwnerHome() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}! 👋
+              Welcome back, {(profile as any)?.fullName?.split(' ')[0] || profile?.full_name?.split(' ')[0] || 'there'}!
             </h1>
             <p className="text-muted-foreground">Here's what's happening with your businesses</p>
           </div>

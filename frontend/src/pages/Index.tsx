@@ -86,6 +86,16 @@ export default function Index() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (user && !loading) {
+      if (user.role === 'BUSINESS_OWNER') {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/consumer', { replace: true });
+      }
+    }
+  }, [user, loading, navigate]);
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -84,49 +84,22 @@ export default function Discover() {
   const fetchBusinesses = async () => {
     setLoading(true);
     
-    let query = supabase
-      .from('businesses')
-      .select('*')
-      .eq('is_active', true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
+      if (selectedState) params.append('state', selectedState);
+      if (selectedCity) params.append('city', selectedCity);
+      if (sortBy) params.append('sortBy', sortBy);
 
-    if (selectedCategory && selectedCategory !== 'all') {
-      query = query.eq('category', selectedCategory as BusinessCategory);
-    }
-
-    if (selectedState) {
-      query = query.ilike('state', `%${selectedState}%`);
-    }
-
-    if (selectedCity) {
-      query = query.ilike('city', `%${selectedCity}%`);
-    }
-
-    // Sort by premium first, then by selected criteria
-    switch (sortBy) {
-      case 'rating':
-        query = query.order('is_premium', { ascending: false }).order('average_rating', { ascending: false });
-        break;
-      case 'reviews':
-        query = query.order('is_premium', { ascending: false }).order('total_reviews', { ascending: false });
-        break;
-      case 'newest':
-        query = query.order('is_premium', { ascending: false }).order('created_at', { ascending: false });
-        break;
-      case 'name':
-        query = query.order('is_premium', { ascending: false }).order('name', { ascending: true });
-        break;
-    }
-
-    const { data, error } = await query.limit(50);
-
-    if (error) {
-      console.error('Error fetching businesses:', error);
-    } else {
+      const { data } = await api.get(`/businesses?${params.toString()}`);
+      
       setAllBusinesses(data || []);
       setBusinesses(data || []);
+    } catch (error) {
+      console.error('Error fetching businesses:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSearch = (e: React.FormEvent) => {
