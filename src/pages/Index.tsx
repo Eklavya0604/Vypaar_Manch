@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,23 +9,22 @@ import {
   Building2, Search, MapPin, Star, ChevronRight, 
   Utensils, ShoppingBag, Heart, Scissors, Dumbbell, 
   Home, Car, Briefcase, GraduationCap, Gamepad2,
-  Laptop, Building, Wallet, MoreHorizontal,
-  CheckCircle, Shield, Zap, Users, ArrowRight
+  Laptop, Building, CheckCircle, Shield, Zap, Users, ArrowRight, Sparkles
 } from 'lucide-react';
 
 const categories = [
-  { name: 'Restaurant', icon: Utensils, color: 'bg-orange-100 text-orange-600' },
-  { name: 'Retail', icon: ShoppingBag, color: 'bg-blue-100 text-blue-600' },
-  { name: 'Healthcare', icon: Heart, color: 'bg-red-100 text-red-600' },
-  { name: 'Beauty', icon: Scissors, color: 'bg-pink-100 text-pink-600' },
-  { name: 'Fitness', icon: Dumbbell, color: 'bg-green-100 text-green-600' },
-  { name: 'Home Services', icon: Home, color: 'bg-amber-100 text-amber-600' },
-  { name: 'Automotive', icon: Car, color: 'bg-slate-100 text-slate-600' },
-  { name: 'Professional', icon: Briefcase, color: 'bg-indigo-100 text-indigo-600' },
-  { name: 'Education', icon: GraduationCap, color: 'bg-purple-100 text-purple-600' },
-  { name: 'Entertainment', icon: Gamepad2, color: 'bg-cyan-100 text-cyan-600' },
-  { name: 'Technology', icon: Laptop, color: 'bg-teal-100 text-teal-600' },
-  { name: 'Real Estate', icon: Building, color: 'bg-emerald-100 text-emerald-600' },
+  { name: 'Restaurant', icon: Utensils, color: 'from-orange-400 to-red-500' },
+  { name: 'Retail', icon: ShoppingBag, color: 'from-blue-400 to-indigo-500' },
+  { name: 'Healthcare', icon: Heart, color: 'from-rose-400 to-pink-500' },
+  { name: 'Beauty', icon: Scissors, color: 'from-fuchsia-400 to-purple-500' },
+  { name: 'Fitness', icon: Dumbbell, color: 'from-emerald-400 to-green-500' },
+  { name: 'Home Services', icon: Home, color: 'from-amber-400 to-orange-500' },
+  { name: 'Automotive', icon: Car, color: 'from-slate-400 to-gray-600' },
+  { name: 'Professional', icon: Briefcase, color: 'from-indigo-400 to-blue-600' },
+  { name: 'Education', icon: GraduationCap, color: 'from-purple-400 to-indigo-500' },
+  { name: 'Entertainment', icon: Gamepad2, color: 'from-cyan-400 to-blue-500' },
+  { name: 'Technology', icon: Laptop, color: 'from-teal-400 to-emerald-500' },
+  { name: 'Real Estate', icon: Building, color: 'from-green-400 to-teal-500' },
 ];
 
 const featuredBusinesses = [
@@ -36,7 +35,7 @@ const featuredBusinesses = [
     rating: 4.8,
     reviews: 124,
     city: 'Mumbai',
-    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=300&fit=crop',
+    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80',
     isVerified: true,
     isPremium: true,
   },
@@ -47,7 +46,7 @@ const featuredBusinesses = [
     rating: 4.9,
     reviews: 89,
     city: 'Delhi',
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80',
     isVerified: true,
     isPremium: false,
   },
@@ -58,7 +57,7 @@ const featuredBusinesses = [
     rating: 4.7,
     reviews: 56,
     city: 'Bangalore',
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
     isVerified: true,
     isPremium: true,
   },
@@ -77,6 +76,15 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -87,53 +95,57 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-primary/30">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="section-container">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-primary-foreground" />
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-white/20 shadow-sm' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-emerald-400 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-all duration-300">
+                <Building2 className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-foreground">BizConnect</span>
+              <span className={`text-2xl font-extrabold tracking-tight transition-colors ${isScrolled ? 'text-slate-900 dark:text-white' : 'text-white'}`}>
+                Vypar Manch
+              </span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-6">
-              <Link to="/discover" className="text-muted-foreground hover:text-foreground transition-colors">
+            <div className="hidden md:flex items-center gap-8">
+              <Link to="/discover" className={`font-medium transition-colors hover:text-primary ${isScrolled ? 'text-slate-600 dark:text-slate-300' : 'text-white/90 hover:text-white'}`}>
                 Discover
               </Link>
-              <Link to="/categories" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/categories" className={`font-medium transition-colors hover:text-primary ${isScrolled ? 'text-slate-600 dark:text-slate-300' : 'text-white/90 hover:text-white'}`}>
                 Categories
               </Link>
               {profile?.role === 'BUSINESS_OWNER' && (
-                <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/dashboard" className={`font-medium transition-colors hover:text-primary ${isScrolled ? 'text-slate-600 dark:text-slate-300' : 'text-white/90 hover:text-white'}`}>
                   Dashboard
                 </Link>
               )}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {loading ? (
-                <div className="w-20 h-9 bg-muted animate-pulse rounded-lg" />
+                <div className="w-24 h-10 bg-white/10 animate-pulse rounded-full" />
               ) : user ? (
                 <div className="flex items-center gap-3">
                   <Link to="/profile">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" className={`rounded-full ${isScrolled ? '' : 'text-white hover:bg-white/10 hover:text-white'}`}>
                       {profile?.full_name || 'Profile'}
                     </Button>
                   </Link>
-                  <Button variant="outline" size="sm" onClick={() => signOut()}>
+                  <Button variant="outline" className="rounded-full border-white/20 hover:bg-white/10" onClick={() => signOut()}>
                     Sign Out
                   </Button>
                 </div>
               ) : (
                 <>
-                  <Link to="/auth">
-                    <Button variant="ghost" size="sm">Sign In</Button>
+                  <Link to="/auth" className="hidden sm:block">
+                    <Button variant="ghost" className={`rounded-full font-medium ${isScrolled ? '' : 'text-white hover:bg-white/10 hover:text-white'}`}>Log In</Button>
                   </Link>
                   <Link to="/auth">
-                    <Button variant="gradient" size="sm">Get Started</Button>
+                    <Button className="rounded-full bg-white text-slate-900 hover:bg-slate-100 shadow-lg shadow-white/10 font-semibold px-6">
+                      Get Started
+                    </Button>
                   </Link>
                 </>
               )}
@@ -143,63 +155,65 @@ export default function Index() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-hero py-20 lg:py-32">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+      <section className="relative overflow-hidden bg-slate-950 pt-32 pb-20 lg:pt-48 lg:pb-32 min-h-[90vh] flex items-center">
+        {/* Abstract Background Blobs */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/30 rounded-full mix-blend-screen filter blur-[120px] opacity-70 animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/20 rounded-full mix-blend-screen filter blur-[120px] opacity-70 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
         
-        <div className="section-container relative">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 animate-fade-in">
-              <Zap className="h-4 w-4 text-warning" />
-              <span className="text-sm text-primary-foreground/90">Trusted by 50,000+ customers</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          <div className="max-w-4xl mx-auto text-center space-y-10">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl animate-fade-in hover:bg-white/10 transition-colors cursor-pointer">
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <span className="text-sm font-medium text-white/90">The #1 Platform for Indian Businesses</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight animate-slide-up">
-              Discover & Connect with{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-warning to-accent">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-[1.1] tracking-tight animate-slide-up">
+              Connect with the best <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-primary">
                 Local Businesses
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto animate-slide-up stagger-1">
-              Find the best services near you, read trusted reviews, and book appointments with confidence.
+            <p className="text-lg md:text-2xl text-slate-300 max-w-2xl mx-auto font-light animate-slide-up stagger-1 leading-relaxed">
+              Vypar Manch helps you find trusted services, read authentic reviews, and grow your local network.
             </p>
 
-            {/* Search Bar */}
-            <div className="flex flex-col gap-4 max-w-3xl mx-auto animate-slide-up stagger-2">
-              <div className="flex flex-col sm:flex-row gap-3">
+            {/* Premium Search Bar */}
+            <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-xl p-3 rounded-3xl border border-white/20 shadow-2xl animate-slide-up stagger-2">
+              <div className="flex flex-col md:flex-row gap-3">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <Input 
-                    placeholder="Search for businesses or services..." 
-                    className="h-12 pl-12 bg-background/95 border-0 shadow-lg"
+                    placeholder="What are you looking for?" 
+                    className="h-14 pl-14 bg-white/5 border-transparent text-white placeholder:text-slate-400 rounded-2xl focus:bg-white/10 transition-all text-lg"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
-                <Button size="lg" variant="accent" className="h-12 px-8" onClick={handleSearch}>
-                  <Search className="h-5 w-5 mr-2" />
+                <div className="w-full md:w-1/3 bg-white/5 rounded-2xl px-2 flex items-center border border-transparent focus-within:border-white/10 transition-colors">
+                  <CascadingLocationSelector
+                    state={selectedState}
+                    city={selectedCity}
+                    onStateChange={setSelectedState}
+                    onCityChange={setSelectedCity}
+                    showLabels={false}
+                    compact
+                  />
+                </div>
+                <Button size="lg" className="h-14 px-8 rounded-2xl bg-gradient-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90 text-white font-semibold text-lg shadow-lg shadow-primary/25 transition-all hover:scale-[1.02]" onClick={handleSearch}>
                   Search
                 </Button>
-              </div>
-              <div className="bg-background/95 rounded-xl p-3 shadow-lg">
-                <CascadingLocationSelector
-                  state={selectedState}
-                  city={selectedCity}
-                  onStateChange={setSelectedState}
-                  onCityChange={setSelectedCity}
-                  showLabels={false}
-                  compact
-                />
               </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8 animate-slide-up stagger-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 animate-slide-up stagger-3 border-t border-white/10 mt-12">
               {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-primary-foreground">{stat.value}</div>
-                  <div className="text-sm text-primary-foreground/70">{stat.label}</div>
+                <div key={index} className="text-center group">
+                  <div className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-white/50 mb-2 group-hover:scale-110 transition-transform duration-300">{stat.value}</div>
+                  <div className="text-sm md:text-base font-medium text-slate-400 tracking-wide uppercase">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -208,32 +222,33 @@ export default function Index() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 lg:py-24">
-        <div className="section-container">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Browse by Category</h2>
-              <p className="text-muted-foreground mt-1">Find exactly what you're looking for</p>
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-slate-50 dark:bg-slate-900 -skew-y-2 origin-top-left scale-110 z-0"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-4">
+            <div className="space-y-2">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Explore Categories</h2>
+              <p className="text-lg text-slate-500 dark:text-slate-400">Discover exactly what you need in your area.</p>
             </div>
             <Link to="/categories">
-              <Button variant="ghost" className="hidden sm:flex">
-                View All <ChevronRight className="h-4 w-4 ml-1" />
+              <Button variant="ghost" className="rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 font-medium">
+                View All Categories <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {categories.map((category, index) => (
               <Link
                 key={category.name}
                 to={`/discover?category=${category.name.toLowerCase().replace(' ', '_')}`}
-                className="group p-4 rounded-xl bg-card border border-border hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-in"
+                className="group relative flex flex-col items-center justify-center p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 animate-fade-in"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className={`w-12 h-12 rounded-lg ${category.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                  <category.icon className="h-6 w-6" />
+                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                  <category.icon className="h-8 w-8 text-white" strokeWidth={1.5} />
                 </div>
-                <h3 className="font-medium text-foreground text-sm">{category.name}</h3>
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-center">{category.name}</h3>
               </Link>
             ))}
           </div>
@@ -241,68 +256,72 @@ export default function Index() {
       </section>
 
       {/* Featured Businesses */}
-      <section className="py-16 lg:py-24 bg-secondary/30">
-        <div className="section-container">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Featured Businesses</h2>
-              <p className="text-muted-foreground mt-1">Top-rated and verified businesses</p>
+      <section className="py-24 bg-white dark:bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-4">
+            <div className="space-y-2">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Premium Businesses</h2>
+              <p className="text-lg text-slate-500 dark:text-slate-400">Handpicked, top-rated places just for you.</p>
             </div>
             <Link to="/discover">
-              <Button variant="ghost">
-                Explore All <ChevronRight className="h-4 w-4 ml-1" />
+              <Button variant="outline" className="rounded-full border-slate-200 dark:border-slate-700">
+                Explore All <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredBusinesses.map((business, index) => (
               <Link
                 key={business.id}
                 to={`/business/${business.id}`}
-                className="group card-interactive overflow-hidden animate-slide-up"
+                className="group flex flex-col bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 animate-slide-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-64 overflow-hidden">
                   <img 
                     src={business.image} 
                     alt={business.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                   />
-                  <div className="absolute top-3 left-3 flex gap-2">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute top-4 left-4 flex gap-2">
                     {business.isPremium && (
-                      <Badge variant="premium">
-                        <Star className="h-3 w-3" />
-                        Premium
+                      <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-lg backdrop-blur-md">
+                        <Star className="h-3 w-3 mr-1 fill-white" /> Premium
                       </Badge>
                     )}
                     {business.isVerified && (
-                      <Badge variant="verified">
-                        <CheckCircle className="h-3 w-3" />
-                        Verified
+                      <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 shadow-lg backdrop-blur-md">
+                        <CheckCircle className="h-3 w-3 mr-1" /> Verified
                       </Badge>
                     )}
                   </div>
-                </div>
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                        {business.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">{business.category}</p>
-                    </div>
-                    <div className="flex items-center gap-1 bg-secondary px-2 py-1 rounded-md">
-                      <Star className="h-4 w-4 text-warning fill-warning" />
-                      <span className="font-medium text-sm">{business.rating}</span>
+                  <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                    <Badge variant="secondary" className="bg-white/20 backdrop-blur-md text-white border-0 hover:bg-white/30">
+                      {business.category}
+                    </Badge>
+                    <div className="flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white font-semibold">
+                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                      {business.rating}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {business.city}
-                    </span>
-                    <span>{business.reviews} reviews</span>
+                </div>
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors mb-2">
+                      {business.name}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        {business.city}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4 text-primary" />
+                        {business.reviews} reviews
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -312,105 +331,101 @@ export default function Index() {
       </section>
 
       {/* Trust Section */}
-      <section className="py-16 lg:py-24">
-        <div className="section-container">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">Why Choose BizConnect?</h2>
-            <p className="text-muted-foreground mt-2">Trusted by thousands of businesses and customers</p>
+      <section className="py-24 bg-slate-50 dark:bg-slate-900 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">Why Choose Vypar Manch?</h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400">We provide the most reliable platform to connect customers with authentic local businesses.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6 animate-slide-up">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8 text-primary" />
+            {[
+              { icon: Shield, title: "Verified Listings", desc: "Every business is thoroughly verified for authenticity to ensure you get the best quality service.", color: "text-blue-500", bg: "bg-blue-500/10" },
+              { icon: Star, title: "Trusted Reviews", desc: "Real reviews from real people. Make informed decisions based on genuine customer experiences.", color: "text-amber-500", bg: "bg-amber-500/10" },
+              { icon: Zap, title: "Instant Connection", desc: "Connect directly via WhatsApp, call, or message instantly without any hidden fees.", color: "text-emerald-500", bg: "bg-emerald-500/10" }
+            ].map((feature, idx) => (
+              <div key={idx} className="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-100 dark:border-slate-700 shadow-xl hover:-translate-y-2 transition-transform duration-300 text-center group">
+                <div className={`w-20 h-20 mx-auto rounded-2xl ${feature.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <feature.icon className={`h-10 w-10 ${feature.color}`} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{feature.desc}</p>
               </div>
-              <h3 className="font-semibold text-lg text-foreground mb-2">Verified Businesses</h3>
-              <p className="text-muted-foreground">All businesses are verified for authenticity and quality assurance</p>
-            </div>
-
-            <div className="text-center p-6 animate-slide-up stagger-1">
-              <div className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-success" />
-              </div>
-              <h3 className="font-semibold text-lg text-foreground mb-2">Trusted Reviews</h3>
-              <p className="text-muted-foreground">Read genuine reviews from real customers before you book</p>
-            </div>
-
-            <div className="text-center p-6 animate-slide-up stagger-2">
-              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-accent" />
-              </div>
-              <h3 className="font-semibold text-lg text-foreground mb-2">Direct Connection</h3>
-              <p className="text-muted-foreground">Connect directly with businesses via call, WhatsApp, or forms</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 lg:py-24 bg-gradient-primary">
-        <div className="section-container text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-4">
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary to-emerald-600" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
+        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
+          <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">
             Ready to grow your business?
           </h2>
-          <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Join thousands of businesses already using BizConnect to reach more customers
+          <p className="text-xl text-emerald-50 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
+            Join thousands of businesses already using Vypar Manch to reach more customers and grow their revenue locally.
           </p>
           <Link to="/auth">
-            <Button size="xl" variant="accent">
-              List Your Business Free
-              <ArrowRight className="h-5 w-5 ml-2" />
+            <Button size="lg" className="h-16 px-10 rounded-full bg-white text-primary hover:bg-slate-50 font-bold text-lg shadow-2xl hover:shadow-white/25 transition-all hover:scale-105">
+              List Your Business For Free
+              <ArrowRight className="h-6 w-6 ml-3" />
             </Button>
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-foreground py-12">
-        <div className="section-container">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <Building2 className="h-4 w-4 text-primary-foreground" />
+      <footer className="bg-slate-950 pt-20 pb-10 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-emerald-400 rounded-xl flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg font-bold text-background">BizConnect</span>
+                <span className="text-2xl font-bold text-white">Vypar Manch</span>
               </div>
-              <p className="text-muted text-sm">
-                Connecting businesses with customers since 2025
+              <p className="text-slate-400 leading-relaxed max-w-sm mb-6">
+                The most trusted platform connecting local businesses with customers across India. Discover, connect, and grow.
               </p>
             </div>
             
             <div>
-              <h4 className="font-semibold text-background mb-4">For Customers</h4>
-              <ul className="space-y-2 text-sm text-muted">
-                <li><Link to="/discover" className="hover:text-background transition-colors">Discover</Link></li>
-                <li><Link to="/categories" className="hover:text-background transition-colors">Categories</Link></li>
-                <li><Link to="/reviews" className="hover:text-background transition-colors">Reviews</Link></li>
+              <h4 className="text-white font-semibold mb-6">For Customers</h4>
+              <ul className="space-y-4 text-slate-400">
+                <li><Link to="/discover" className="hover:text-primary transition-colors">Discover</Link></li>
+                <li><Link to="/categories" className="hover:text-primary transition-colors">Categories</Link></li>
+                <li><Link to="/reviews" className="hover:text-primary transition-colors">Reviews</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold text-background mb-4">For Businesses</h4>
-              <ul className="space-y-2 text-sm text-muted">
-                <li><Link to="/auth" className="hover:text-background transition-colors">List Your Business</Link></li>
-                <li><Link to="/pricing" className="hover:text-background transition-colors">Pricing</Link></li>
-                <li><Link to="/resources" className="hover:text-background transition-colors">Resources</Link></li>
+              <h4 className="text-white font-semibold mb-6">For Businesses</h4>
+              <ul className="space-y-4 text-slate-400">
+                <li><Link to="/auth" className="hover:text-primary transition-colors">List Business</Link></li>
+                <li><Link to="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
+                <li><Link to="/success-stories" className="hover:text-primary transition-colors">Success Stories</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold text-background mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-muted">
-                <li><Link to="/about" className="hover:text-background transition-colors">About Us</Link></li>
-                <li><Link to="/contact" className="hover:text-background transition-colors">Contact</Link></li>
-                <li><Link to="/privacy" className="hover:text-background transition-colors">Privacy Policy</Link></li>
+              <h4 className="text-white font-semibold mb-6">Company</h4>
+              <ul className="space-y-4 text-slate-400">
+                <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+                <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+                <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-muted/20 mt-8 pt-8 text-center text-sm text-muted">
-            © 2024 BizConnect. All rights reserved.
+          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-slate-500 text-sm">
+            <p>© {new Date().getFullYear()} Vypar Manch. All rights reserved.</p>
+            <div className="flex items-center gap-4 mt-4 md:mt-0">
+              <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            </div>
           </div>
         </div>
       </footer>

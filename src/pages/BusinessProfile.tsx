@@ -257,10 +257,8 @@ export default function BusinessProfile() {
                 <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </Link>
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-bold text-foreground hidden sm:block">BizConnect</span>
+                <img src="/favicon.ico" alt="Vypar Manch Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
+                <span className="text-xl font-bold text-foreground hidden sm:block">Vypar Manch</span>
               </Link>
             </div>
 

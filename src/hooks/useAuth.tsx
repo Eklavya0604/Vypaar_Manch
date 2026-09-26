@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (session?.user) {
           setTimeout(() => {
-            fetchProfile(session.user.id).then(setProfile);
+            fetchProfile(session.user.id).then(setProfile).catch(console.error);
           }, 0);
         } else {
           setProfile(null);
@@ -82,10 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchProfile(session.user.id).then((profileData) => {
           setProfile(profileData);
           setLoading(false);
+        }).catch((e) => {
+          console.error(e);
+          setLoading(false);
         });
       } else {
         setLoading(false);
       }
+    }).catch((e) => {
+      console.error(e);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

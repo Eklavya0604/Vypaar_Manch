@@ -129,10 +129,8 @@ export default function CreateBusiness() {
                 <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </Link>
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-bold text-foreground">BizConnect</span>
+                <img src="/favicon.ico" alt="Vypar Manch Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
+                <span className="text-xl font-bold text-foreground">Vypar Manch</span>
               </Link>
             </div>
           </div>
@@ -142,7 +140,7 @@ export default function CreateBusiness() {
       <div className="section-container py-8 max-w-3xl">
         <div className="mb-8 animate-slide-up">
           <h1 className="text-3xl font-bold text-foreground">Create Your Business</h1>
-          <p className="text-muted-foreground mt-2">Fill in the details to list your business on BizConnect</p>
+          <p className="text-muted-foreground mt-2">Fill in the details to list your business on Vypar Manch</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">

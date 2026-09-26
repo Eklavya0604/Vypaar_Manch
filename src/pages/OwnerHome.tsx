@@ -162,10 +162,8 @@ export default function OwnerHome() {
         <div className="section-container">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-foreground">BizConnect</span>
+              <img src="/favicon.ico" alt="Vypar Manch Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
+              <span className="text-xl font-bold text-foreground">Vypar Manch</span>
               <Badge variant="outline" className="ml-2">Business</Badge>
             </Link>
 
