@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/auth/logout');
       setUser(null);
       toast.success('Logged out successfully');
-      window.location.href = '/';
+      window.location.replace('/');
     } catch (error) {
       toast.error('Error logging out');
     }

@@ -45,7 +45,7 @@ interface ServiceRequest {
 }
 
 export default function OwnerHome() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -58,6 +58,12 @@ export default function OwnerHome() {
   const [recentRequests, setRecentRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingQR, setGeneratingQR] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     if (profile) {

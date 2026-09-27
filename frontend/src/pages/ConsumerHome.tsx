@@ -25,7 +25,7 @@ const categories = [
 ];
 
 export default function ConsumerHome() {
-  const { user, profile, signOut, updateRole } = useAuth();
+  const { user, profile, signOut, updateRole, loading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
@@ -35,6 +35,12 @@ export default function ConsumerHome() {
   const [loadingAllBiz, setLoadingAllBiz] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
   const [stats, setStats] = useState({ reviews: 0, saved: 0, viewed: 0, helpful: 0 });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -388,7 +394,7 @@ export default function ConsumerHome() {
                           <h5 className="font-bold text-slate-800 text-sm truncate">{biz.name}</h5>
                           <p className="text-[10px] text-slate-500 truncate mt-0.5 uppercase tracking-wider">{biz.category}</p>
                         </div>
-                        <Link to={/business/}>
+                        <Link to={`/business/${biz.slug}`}>
                           <Button variant="outline" size="sm" className="h-7 text-xs px-3 rounded-full hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200">View</Button>
                         </Link>
                       </div>
