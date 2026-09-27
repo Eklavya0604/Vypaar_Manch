@@ -32,7 +32,7 @@ export const register = async (req: Request, res: Response) => {
 
     const token = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
     res.status(201).json({ user: newUser, token });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -57,7 +57,7 @@ export const login = async (req: Request, res: Response) => {
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
     res.status(200).json({ user, token });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -96,7 +96,7 @@ export const googleAuth = async (req: Request, res: Response) => {
 
     const jwtToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
     res.status(200).json({ user, token: jwtToken });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -134,7 +134,7 @@ export const logout = async (req: Request, res: Response) => {
         // If it's already blacklisted (unique constraint), ignore
       }
     }
-    res.clearCookie('token');
+    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -160,7 +160,7 @@ export const updateRole = async (req: Request, res: Response) => {
 
     // Sign new token with updated role
     const jwtToken = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
-    res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
 
     res.status(200).json({ user, token: jwtToken });
   } catch (error: any) {
