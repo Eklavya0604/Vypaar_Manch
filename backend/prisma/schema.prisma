@@ -128,3 +128,9 @@ model Review {
   business Business @relation(fields: [businessId], references: [id])
   consumer User?    @relation(fields: [consumerId], references: [id])
 }
+
+model BlacklistedToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  createdAt DateTime @default(now())
+}

@@ -28,11 +28,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !loading) {
-      if (user.role === 'BUSINESS_OWNER') {
-        navigate('/dashboard', { replace: true });
-      } else {
-        navigate('/consumer', { replace: true });
-      }
+      navigate('/consumer', { replace: true });
     }
   }, [user, loading, navigate]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -88,11 +88,7 @@ export default function Index() {
 
   useEffect(() => {
     if (user && !loading) {
-      if (user.role === 'BUSINESS_OWNER') {
-        navigate('/dashboard', { replace: true });
-      } else {
-        navigate('/consumer', { replace: true });
-      }
+      navigate('/consumer', { replace: true });
     }
   }, [user, loading, navigate]);
 
@@ -127,7 +123,7 @@ export default function Index() {
                 Categories
               </Link>
               {profile?.role === 'BUSINESS_OWNER' && (
-                <Link to="/dashboard" className={`font-medium transition-colors hover:text-primary ${isScrolled ? 'text-slate-600 dark:text-slate-300' : 'text-white/90 hover:text-white'}`}>
+                <Link to="/consumer" className={`font-medium transition-colors hover:text-primary ${isScrolled ? 'text-slate-600 dark:text-slate-300' : 'text-white/90 hover:text-white'}`}>
                   Dashboard
                 </Link>
               )}
@@ -431,7 +427,7 @@ export default function Index() {
           </div>
           
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-slate-500 text-sm">
-            <p>© {new Date().getFullYear()} Vypar Manch. All rights reserved.</p>
+            <p>Â© {new Date().getFullYear()} Vypar Manch. All rights reserved.</p>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>

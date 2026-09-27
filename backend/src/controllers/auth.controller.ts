@@ -121,9 +121,24 @@ export const me = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = (req: Request, res: Response) => {
-  res.clearCookie('token');
-  res.status(200).json({ message: 'Logged out successfully' });
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies.token;
+    if (token) {
+      // Add token to blacklist
+      try {
+        await prisma.blacklistedToken.create({
+          data: { token }
+        });
+      } catch (e) {
+        // If it's already blacklisted (unique constraint), ignore
+      }
+    }
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 export const updateRole = async (req: Request, res: Response) => {

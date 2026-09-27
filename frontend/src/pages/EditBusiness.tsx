@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,7 +101,7 @@ export default function EditBusiness() {
     if (error) {
       console.error('Error fetching business:', error);
       toast.error('Business not found');
-      navigate('/dashboard');
+      navigate('/consumer');
       return;
     }
 
@@ -279,7 +279,7 @@ export default function EditBusiness() {
         <div className="section-container">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <Link to="/dashboard" className="flex items-center gap-2">
+              <Link to="/consumer" className="flex items-center gap-2">
                 <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </Link>
               <Link to="/" className="flex items-center gap-2">
@@ -571,7 +571,7 @@ export default function EditBusiness() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Min Price (₹)</Label>
+                      <Label>Min Price (â‚¹)</Label>
                       <Input
                         type="number"
                         placeholder="100"
@@ -580,7 +580,7 @@ export default function EditBusiness() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Max Price (₹)</Label>
+                      <Label>Max Price (â‚¹)</Label>
                       <Input
                         type="number"
                         placeholder="500"
@@ -610,7 +610,7 @@ export default function EditBusiness() {
                           <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                             {(service.price_min || service.price_max) && (
                               <span>
-                                ₹{service.price_min || 0} - ₹{service.price_max || '∞'}
+                                â‚¹{service.price_min || 0} - â‚¹{service.price_max || 'âˆž'}
                               </span>
                             )}
                             {service.duration_minutes && (

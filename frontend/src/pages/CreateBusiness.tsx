@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
@@ -139,7 +139,7 @@ export default function CreateBusiness() {
       });
 
       toast.success('Business created successfully!');
-      navigate('/dashboard');
+      navigate('/consumer');
     } catch (error) {
       console.error('Error creating business:', error);
       toast.error('Failed to create business');
@@ -153,7 +153,7 @@ export default function CreateBusiness() {
       {/* HEADER */}
       <header className="h-16 bg-[#185b45] text-white flex items-center px-6 justify-between shrink-0 z-10 sticky top-0 shadow-sm">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-full bg-[#124635] hover:bg-[#0d3427] transition-colors">
+          <Link to="/consumer" className="flex items-center justify-center w-8 h-8 rounded-full bg-[#124635] hover:bg-[#0d3427] transition-colors">
             <ChevronLeft className="h-4 w-4" />
           </Link>
           <div className="h-4 w-px bg-[#124635]"></div>
@@ -433,7 +433,7 @@ export default function CreateBusiness() {
                 <Button 
                   type="button" 
                   variant="ghost" 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/consumer')}
                   className="text-slate-500 hover:text-slate-800"
                 >
                   Cancel

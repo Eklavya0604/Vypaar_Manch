@@ -10,9 +10,10 @@ import {
   Building2, Search, MapPin, Star, ChevronRight, 
   Heart, Bell, User, Utensils, ShoppingBag, Scissors, 
   Dumbbell, Home, Car, LayoutDashboard, Compass, Bookmark, 
-  MessageSquare, Edit3, Settings, HelpCircle, CheckCircle2, Circle
+  MessageSquare, Edit3, Settings, HelpCircle, CheckCircle2, Circle, Plus
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 
 const categories = [
   { name: 'Restaurant', icon: Utensils, count: '8 places', color: 'text-orange-500 bg-orange-50' },
@@ -28,14 +29,40 @@ export default function ConsumerHome() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
+  const [myBusinesses, setMyBusinesses] = useState<any[]>([]);
+  const [loadingBiz, setLoadingBiz] = useState(false);
+  const [allBusinesses, setAllBusinesses] = useState<any[]>([]);
+  const [loadingAllBiz, setLoadingAllBiz] = useState(false);
+  const [activeTab, setActiveTab] = useState('Overview');
+  const [stats, setStats] = useState({ reviews: 0, saved: 0, viewed: 0, helpful: 0 });
 
-  // Dummy recently viewed for mockup
-  const recentlyViewed = [
-    { id: 1, name: 'The Daily Brew', location: 'Indirapuram, Ghaziabad', category: 'Café', rating: 4.8, reviews: 320, image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80' },
-    { id: 2, name: 'FitZone Gym', location: 'Vaishali, Ghaziabad', category: 'Fitness', rating: 4.6, reviews: 210, image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=80' },
-    { id: 3, name: 'Glow Beauty Salon', location: 'Kaushambi, Ghaziabad', category: 'Salon', rating: 4.5, reviews: 182, image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80' },
-    { id: 4, name: 'Spice Villa', location: 'Raj Nagar, Ghaziabad', category: 'Restaurant', rating: 4.4, reviews: 98, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=80' },
-  ];
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setLoadingBiz(true);
+      setLoadingAllBiz(true);
+      try {
+        const { data } = await api.get('/businesses');
+        if (data) {
+          // Sort by creation date descending
+          const sorted = data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setAllBusinesses(sorted.slice(0, 8));
+          if (profile?.id) {
+            setMyBusinesses(data.filter((b: any) => b.ownerId === profile.id));
+            
+            // Try to fetch real stats if tables exist
+            const { count: reviewCount } = await supabase.from('Review').select('*', { count: 'exact', head: true }).eq('consumerId', profile.id);
+            setStats(prev => ({ ...prev, reviews: reviewCount || 0 }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch businesses:', err);
+      } finally {
+        setLoadingBiz(false);
+        setLoadingAllBiz(false);
+      }
+    };
+    fetchAllData();
+  }, [profile]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -57,13 +84,32 @@ export default function ConsumerHome() {
           <div className="flex w-full bg-white rounded-md overflow-hidden p-1 gap-1">
             <div className="flex-1 flex items-center bg-white px-3 border-r">
               <Search className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
-              <input type="text" placeholder="Search for businesses or services..." className="w-full h-8 outline-none text-slate-800 text-sm placeholder:text-slate-400" />
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/discover?q=${searchQuery}&city=${locationQuery}`)}
+                placeholder="Search for businesses or services..." 
+                className="w-full h-8 outline-none text-slate-800 text-sm placeholder:text-slate-400" 
+              />
             </div>
             <div className="w-48 flex items-center bg-white px-3">
               <MapPin className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
-              <input type="text" placeholder="Ghaziabad, UP" className="w-full h-8 outline-none text-slate-800 text-sm placeholder:text-slate-400" />
+              <input 
+                type="text" 
+                value={locationQuery}
+                onChange={(e) => setLocationQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/discover?q=${searchQuery}&city=${locationQuery}`)}
+                placeholder="Ghaziabad, UP" 
+                className="w-full h-8 outline-none text-slate-800 text-sm placeholder:text-slate-400" 
+              />
             </div>
-            <button className="bg-[#ff7a59] hover:bg-[#e0694a] text-white px-6 rounded text-sm font-medium transition-colors">Search</button>
+            <button 
+              onClick={() => navigate(`/discover?q=${searchQuery}&city=${locationQuery}`)}
+              className="bg-[#ff7a59] hover:bg-[#e0694a] text-white px-6 rounded text-sm font-medium transition-colors"
+            >
+              Search
+            </button>
           </div>
         </div>
 
@@ -73,7 +119,11 @@ export default function ConsumerHome() {
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#185b45]"></span>
           </button>
-          <div className="flex items-center gap-2 cursor-pointer bg-[#124635] py-1.5 px-2.5 rounded-full hover:bg-[#0d3427] transition-colors">
+          <div 
+            onClick={() => signOut()} 
+            className="flex items-center gap-2 cursor-pointer bg-[#124635] py-1.5 px-2.5 rounded-full hover:bg-[#0d3427] transition-colors"
+            title="Sign Out"
+          >
             <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">
               {profile?.fullName?.charAt(0) || 'A'}
             </div>
@@ -86,9 +136,6 @@ export default function ConsumerHome() {
         {/* LEFT SIDEBAR */}
         <aside className="w-64 bg-white border-r flex flex-col p-4 shrink-0 overflow-y-auto hidden lg:flex">
           <nav className="space-y-1.5 flex-1 mt-4">
-            <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
-              <LayoutDashboard className="h-5 w-5" /> Dashboard
-            </Link>
             <Link to="/discover" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
               <Compass className="h-5 w-5" /> Discover
             </Link>
@@ -109,9 +156,11 @@ export default function ConsumerHome() {
             </Link>
 
             <div className="pt-6">
-              <Button className="w-full bg-[#185b45] hover:bg-[#124635] text-white flex items-center gap-2">
-                <Building2 className="h-4 w-4" /> List Your Business
-              </Button>
+              <Link to="/business/new" className="block w-full">
+                <Button className="w-full bg-[#185b45] hover:bg-[#124635] text-white flex items-center gap-2">
+                  <Building2 className="h-4 w-4" /> List Your Business
+                </Button>
+              </Link>
             </div>
           </nav>
 
@@ -170,25 +219,25 @@ export default function ConsumerHome() {
                 <Card className="shadow-sm border border-slate-100">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600"><Star className="h-5 w-5" /></div>
-                    <div><div className="text-xl font-bold text-slate-800">12</div><div className="text-xs text-slate-500 font-medium">Reviews Given</div></div>
+                    <div><div className="text-xl font-bold text-slate-800">{stats.reviews}</div><div className="text-xs text-slate-500 font-medium">Reviews Given</div></div>
                   </CardContent>
                 </Card>
                 <Card className="shadow-sm border border-slate-100">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><Bookmark className="h-5 w-5" /></div>
-                    <div><div className="text-xl font-bold text-slate-800">28</div><div className="text-xs text-slate-500 font-medium">Saved Places</div></div>
+                    <div><div className="text-xl font-bold text-slate-800">{stats.saved}</div><div className="text-xs text-slate-500 font-medium">Saved Places</div></div>
                   </CardContent>
                 </Card>
                 <Card className="shadow-sm border border-slate-100">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600"><Compass className="h-5 w-5" /></div>
-                    <div><div className="text-xl font-bold text-slate-800">15</div><div className="text-xs text-slate-500 font-medium">Businesses Viewed</div></div>
+                    <div><div className="text-xl font-bold text-slate-800">{stats.viewed}</div><div className="text-xs text-slate-500 font-medium">Businesses Viewed</div></div>
                   </CardContent>
                 </Card>
                 <Card className="shadow-sm border border-slate-100">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600"><CheckCircle2 className="h-5 w-5" /></div>
-                    <div><div className="text-xl font-bold text-slate-800">5</div><div className="text-xs text-slate-500 font-medium">Helpful Votes</div></div>
+                    <div><div className="text-xl font-bold text-slate-800">{stats.helpful}</div><div className="text-xs text-slate-500 font-medium">Helpful Votes</div></div>
                   </CardContent>
                 </Card>
               </div>
@@ -196,128 +245,167 @@ export default function ConsumerHome() {
               {/* Tabs */}
               <div className="border-b">
                 <div className="flex gap-6 overflow-x-auto">
-                  {['Overview', 'My Businesses', 'Saved', 'Reviews', 'Messages', 'Settings'].map((tab, i) => (
-                    <button key={tab} className={`pb-3 text-sm font-semibold whitespace-nowrap px-1 border-b-2 transition-colors ${i === 0 ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-400 hover:text-slate-800'}`}>
+                  {['Overview', 'My Businesses', 'Saved', 'Reviews', 'Messages', 'Settings'].map((tab) => (
+                    <button 
+                      key={tab} 
+                      onClick={() => setActiveTab(tab)}
+                      className={`pb-3 text-sm font-semibold whitespace-nowrap px-1 border-b-2 transition-colors ${activeTab === tab ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-400 hover:text-slate-800'}`}>
                       {tab}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Recently Viewed */}
-              <section>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-slate-800">Recently Viewed</h3>
-                  <button className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">View All <ChevronRight className="h-4 w-4" /></button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  {recentlyViewed.map(biz => (
-                    <div key={biz.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer shadow-sm">
-                      <div className="h-32 relative">
-                        <img src={biz.image} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <button className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow hover:bg-white"><Heart className="h-3.5 w-3.5 text-slate-600" /></button>
-                        <div className="absolute bottom-2 left-2"><Badge variant="secondary" className="bg-white/90 backdrop-blur text-xs text-slate-800 font-medium border-0">{biz.category}</Badge></div>
-                      </div>
-                      <div className="p-3">
-                        <h4 className="font-bold text-slate-800 text-sm truncate">{biz.name}</h4>
-                        <p className="text-xs text-slate-500 truncate mt-0.5">{biz.location}</p>
-                        <div className="flex items-center justify-between mt-3">
-                          <div className="flex items-center gap-1 text-sm font-bold text-slate-700">
-                            <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" /> {biz.rating} <span className="text-slate-400 font-normal text-xs">({biz.reviews})</span>
-                          </div>
-                          <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none px-1.5 py-0">Verified</Badge>
-                        </div>
-                      </div>
+              {activeTab === 'Overview' && (
+                <>
+                  <section>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-slate-800">Recent Businesses</h3>
+                      <Link to="/discover" className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">View All <ChevronRight className="h-4 w-4" /></Link>
                     </div>
-                  ))}
-                </div>
-              </section>
+                    {loadingAllBiz ? (
+                      <div className="text-slate-500 text-sm">Loading businesses...</div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        {allBusinesses.map(biz => (
+                          <Link to={`/business/${biz.slug}`} key={biz.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer shadow-sm block">
+                            <div className="h-32 relative bg-slate-200">
+                              {biz.coverImageUrl || biz.logoUrl ? (
+                                <img src={biz.coverImageUrl || biz.logoUrl} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400"><Building2 className="h-10 w-10 opacity-20" /></div>
+                              )}
+                              <button className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow hover:bg-white"><Heart className="h-3.5 w-3.5 text-slate-600" /></button>
+                              <div className="absolute bottom-2 left-2"><Badge variant="secondary" className="bg-white/90 backdrop-blur text-xs text-slate-800 font-medium border-0">{biz.category}</Badge></div>
+                            </div>
+                            <div className="p-3">
+                              <h4 className="font-bold text-slate-800 text-sm truncate">{biz.name}</h4>
+                              <p className="text-xs text-slate-500 truncate mt-0.5">{biz.city}{biz.state ? `, ${biz.state}` : ''}</p>
+                              <div className="flex items-center justify-between mt-3">
+                                <div className="flex items-center gap-1 text-sm font-bold text-slate-700">
+                                  <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" /> {biz.averageRating || 0} <span className="text-slate-400 font-normal text-xs">({biz.totalReviews || 0})</span>
+                                </div>
+                                {biz.isVerified && <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none px-1.5 py-0">Verified</Badge>}
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </section>
 
-              {/* Categories */}
-              <section>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-slate-800">Categories You Explore</h3>
-                  <button className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">View All <ChevronRight className="h-4 w-4" /></button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-                  {categories.map(cat => (
-                    <div key={cat.name} className="bg-white shadow-sm border border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-slate-300 transition-colors cursor-pointer text-center group">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${cat.color}`}>
-                        <cat.icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-800">{cat.name}</div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{cat.count}</div>
-                      </div>
+                  <section>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-slate-800">Categories</h3>
+                      <Link to="/categories" className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">View All <ChevronRight className="h-4 w-4" /></Link>
                     </div>
-                  ))}
-                </div>
-              </section>
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                      {categories.map(cat => {
+                        const count = allBusinesses.filter(b => b.category === cat.name).length;
+                        return (
+                          <Link to={`/discover?category=${cat.name}`} key={cat.name} className="bg-white shadow-sm border border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-slate-300 transition-colors cursor-pointer text-center group">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${cat.color}`}>
+                              <cat.icon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-slate-800">{cat.name}</div>
+                              <div className="text-[10px] text-slate-500 mt-0.5">{count} places</div>
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </section>
+                </>
+              )}
+
+              {activeTab === 'My Businesses' && (
+                <section>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-slate-800">Your Managed Businesses</h3>
+                    <Link to="/business/new" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1"><Plus className="h-4 w-4" /> Add New</Link>
+                  </div>
+                  {loadingBiz ? (
+                    <div className="text-slate-500 text-sm">Loading your businesses...</div>
+                  ) : myBusinesses.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {myBusinesses.map(biz => (
+                        <div key={biz.id} className="bg-white rounded-xl border border-slate-200 p-4 flex gap-4 items-center">
+                          <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                            {biz.logoUrl || biz.coverImageUrl ? (
+                              <img src={biz.logoUrl || biz.coverImageUrl} alt={biz.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-400"><Building2 className="h-6 w-6 opacity-40" /></div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-800 truncate">{biz.name}</h4>
+                            <p className="text-xs text-slate-500 truncate">{biz.category}</p>
+                            <Link to={`/business/${biz.slug}`}>
+                              <Button variant="outline" size="sm" className="mt-2 h-7 text-xs px-3">Manage</Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300">
+                      <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3"><Building2 className="h-6 w-6" /></div>
+                      <h3 className="font-bold text-slate-800 mb-1">No businesses yet</h3>
+                      <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">You haven't listed any businesses on Vypar Manch. Add your first business to get started.</p>
+                      <Link to="/business/new"><Button className="bg-[#185b45] hover:bg-[#124635] text-white">List Your Business</Button></Link>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {['Saved', 'Reviews', 'Messages', 'Settings'].includes(activeTab) && (
+                 <section className="bg-white rounded-xl border border-dashed border-slate-200 p-8 text-center">
+                    <div className="text-slate-400 mb-2 flex justify-center"><LayoutDashboard className="h-8 w-8 opacity-50" /></div>
+                    <h3 className="font-bold text-slate-800 mb-1">{activeTab}</h3>
+                    <p className="text-sm text-slate-500">This section is currently under development. Check back soon!</p>
+                 </section>
+              )}
             </div>
 
             {/* RIGHT SIDEBAR */}
             <div className="w-full xl:w-[320px] shrink-0 space-y-6">
               
               {/* Account Type */}
-              <Card className="shadow-sm border-slate-100">
-                <CardHeader className="pb-3 border-b border-slate-100 px-5 py-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-base font-bold text-slate-800">Account Type</CardTitle>
-                  <span className="text-xs text-slate-400 font-medium cursor-pointer hover:text-slate-600">Switch</span>
-                </CardHeader>
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-                        <User className="h-5 w-5 text-emerald-600" />
+              {/* My Businesses */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-slate-800 px-1">My Businesses</h4>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col p-4 space-y-4">
+                  {loadingBiz ? (
+                    <div className="text-sm text-slate-500">Loading your businesses...</div>
+                  ) : myBusinesses.length > 0 ? (
+                    myBusinesses.map(biz => (
+                      <div key={biz.id} className="flex items-center gap-3 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                        <div className="w-10 h-10 rounded-md bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100">
+                          <Building2 className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-bold text-slate-800 text-sm truncate">{biz.name}</h5>
+                          <p className="text-[10px] text-slate-500 truncate mt-0.5 uppercase tracking-wider">{biz.category}</p>
+                        </div>
+                        <Link to={/business/}>
+                          <Button variant="outline" size="sm" className="h-7 text-xs px-3 rounded-full hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200">View</Button>
+                        </Link>
                       </div>
-                      <div>
-                        <div className="font-bold text-sm text-slate-900">Consumer</div>
-                        <div className="text-[10px] text-slate-500 leading-tight mt-0.5">Discover and support<br/>local businesses</div>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-slate-500 text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                      You haven't listed any businesses yet.
                     </div>
-                    <div className="w-4 h-4 rounded-full border-[4px] border-emerald-600 bg-white"></div>
-                  </div>
+                  )}
                   
-                  <div onClick={() => updateRole('BUSINESS_OWNER')} className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-100 hover:border-emerald-200 bg-white cursor-pointer transition-colors group shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-emerald-50 transition-colors flex items-center justify-center border border-slate-100">
-                        <Building2 className="h-5 w-5 text-slate-400 group-hover:text-emerald-600" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-sm text-slate-700 group-hover:text-slate-900">Business Owner</div>
-                        <div className="text-[10px] text-slate-500 leading-tight mt-0.5">List and manage<br/>your business(es)</div>
-                      </div>
-                    </div>
-                    <div className="w-4 h-4 rounded-full border-2 border-slate-200 group-hover:border-emerald-300"></div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Profile Completion */}
-              <Card className="shadow-sm border-slate-100">
-                <CardHeader className="pb-2 px-5 py-4">
-                  <CardTitle className="text-base font-bold text-slate-800">Profile Completion</CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 pt-2 space-y-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full border-4 border-emerald-500 border-r-slate-100 flex items-center justify-center font-bold text-emerald-700 shadow-sm relative">
-                       80%
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm text-emerald-800">Almost there!</div>
-                      <div className="text-xs text-slate-500 mt-1">Complete your profile to get a better experience.</div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span className="text-slate-600 font-medium">Add profile details</span></div>
-                    <div className="flex items-center gap-3 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span className="text-slate-600 font-medium">Add location</span></div>
-                    <div className="flex items-center gap-3 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span className="text-slate-600 font-medium">Write a short bio</span></div>
-                    <div className="flex items-center gap-3 text-sm"><Circle className="h-4 w-4 text-slate-300" /> <span className="text-slate-500 font-medium">List a business (optional)</span></div>
-                  </div>
-                  <Button className="w-full bg-[#185b45] hover:bg-[#124635] text-white rounded-lg shadow-sm">Complete Profile</Button>
-                </CardContent>
-              </Card>
-
+                  <Link to="/business/new" className="block w-full pt-2">
+                    <Button variant="outline" className="w-full text-sm h-9 border-dashed border-2 hover:border-emerald-500 hover:text-emerald-700 transition-colors">
+                      <Plus className="h-4 w-4 mr-2" /> Add a Business
+                    </Button>
+                  </Link>
+                </div>
+              </div>
               {/* Quick Actions */}
               <div className="space-y-3">
                 <h4 className="font-bold text-slate-800 px-1">Quick Actions</h4>

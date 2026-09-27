@@ -285,11 +285,7 @@ export default function OwnerHome() {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Your Businesses</h2>
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm">
-                  Full Dashboard <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
+
             </div>
 
             {loading ? (
@@ -392,11 +388,7 @@ export default function OwnerHome() {
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-foreground">Recent Service Requests</h2>
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="sm">
-                    View All <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </Link>
+
               </div>
 
               {loading ? (
@@ -444,12 +436,7 @@ export default function OwnerHome() {
                     Add New Business
                   </Button>
                 </Link>
-                <Link to="/dashboard" className="block">
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    View Analytics
-                  </Button>
-                </Link>
+
                 <Link to="/calendar" className="block">
                   <Button variant="outline" className="w-full justify-start gap-2">
                     <Calendar className="h-4 w-4" />

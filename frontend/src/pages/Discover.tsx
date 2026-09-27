@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
@@ -161,7 +161,7 @@ export default function Discover() {
               {user ? (
                 <div className="flex items-center gap-2">
                   {profile?.role === 'BUSINESS_OWNER' && (
-                    <Link to="/dashboard">
+                    <Link to="/consumer">
                       <Button variant="outline" size="sm">Dashboard</Button>
                     </Link>
                   )}

@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Discover from "./pages/Discover";
 import BusinessProfile from "./pages/BusinessProfile";
-import Dashboard from "./pages/Dashboard";
 import CreateBusiness from "./pages/CreateBusiness";
 import EditBusiness from "./pages/EditBusiness";
 import ConsumerHome from "./pages/ConsumerHome";
@@ -41,7 +40,6 @@ const App = () => (
             <Route path="/business/:slug" element={<BusinessProfile />} />
             <Route path="/business/new" element={<CreateBusiness />} />
             <Route path="/business/:id/edit" element={<EditBusiness />} />
-            <Route path="/dashboard" element={<Dashboard />} />
             
             {/* Placeholder routes for new dashboard layout */}
             <Route path="/categories" element={<Placeholder />} />
