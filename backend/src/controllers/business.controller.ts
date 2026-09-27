@@ -51,7 +51,7 @@ export const getAllBusinesses = async (req: Request, res: Response) => {
 
 export const getBusinessBySlugOrId = async (req: Request, res: Response) => {
   try {
-    const { identifier } = req.params;
+    const identifier = req.params.identifier as string;
 
     // Try by slug first, then by ID
     let business = await prisma.business.findFirst({
@@ -138,7 +138,7 @@ export const getMyBusinesses = async (req: Request, res: Response) => {
 
 export const getBusinessData = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     const requestsData = await prisma.serviceRequest.findMany({
       where: { businessId: id },
@@ -175,7 +175,7 @@ export const getBusinessData = async (req: Request, res: Response) => {
 
 export const updateServiceRequest = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const updates = req.body;
     
     await prisma.serviceRequest.update({
@@ -190,7 +190,7 @@ export const updateServiceRequest = async (req: Request, res: Response) => {
 
 export const logBusinessView = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.businessView.create({
       data: { businessId: id }
     });
@@ -207,7 +207,7 @@ export const logBusinessView = async (req: Request, res: Response) => {
 
 export const logContact = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.contactLog.create({
       data: { businessId: id }
     });
@@ -219,7 +219,7 @@ export const logContact = async (req: Request, res: Response) => {
 
 export const submitServiceRequest = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { serviceId, consumerId, description, consumerPhone, consumerEmail } = req.body;
     
     await prisma.serviceRequest.create({
