@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle, Briefcase } from 'lucide-react';
+import { Building2, ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle, Briefcase, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import LocationPicker from '@/components/map/LocationPicker';
 import CascadingLocationSelector from '@/components/CascadingLocationSelector';
+import { ImageUpload } from '@/components/ui/ImageUpload';
 
 const categoryOptions = [
   { value: 'RESTAURANT', label: 'Restaurant' },
@@ -38,6 +39,9 @@ export default function CreateBusiness() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3;
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -65,8 +69,38 @@ export default function CreateBusiness() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateStep = (step: number) => {
+    if (step === 1) {
+      if (!formData.name.trim()) {
+        toast.error('Business name is required');
+        return false;
+      }
+      if (!formData.category) {
+        toast.error('Category is required');
+        return false;
+      }
+    }
+    if (step === 2) {
+      if (!formData.state.trim() || !formData.city.trim()) {
+        toast.error('State and City are required');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
     if (!user || !profile) {
       toast.error('Please sign in to create a business');
@@ -79,10 +113,7 @@ export default function CreateBusiness() {
       return;
     }
 
-    if (!formData.name.trim() || !formData.category || !formData.city.trim() || !formData.state.trim()) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
+    if (!validateStep(3)) return;
 
     setLoading(true);
 
@@ -103,6 +134,8 @@ export default function CreateBusiness() {
         pincode: formData.pincode.trim() || null,
         latitude: formData.latitude,
         longitude: formData.longitude,
+        logoUrl: (formData as any).logoUrl?.trim() || null,
+        coverImageUrl: (formData as any).bannerUrl?.trim() || null,
       });
 
       toast.success('Business created successfully!');
@@ -116,238 +149,319 @@ export default function CreateBusiness() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="section-container">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <ChevronLeft className="h-5 w-5 text-muted-foreground" />
-              </Link>
-              <Link to="/" className="flex items-center gap-2">
-                <img src="/favicon.ico" alt="Vypar Manch Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
-                <span className="text-xl font-bold text-foreground">Vypar Manch</span>
-              </Link>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      {/* HEADER */}
+      <header className="h-16 bg-[#185b45] text-white flex items-center px-6 justify-between shrink-0 z-10 sticky top-0 shadow-sm">
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-full bg-[#124635] hover:bg-[#0d3427] transition-colors">
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
+          <div className="h-4 w-px bg-[#124635]"></div>
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-black rounded flex items-center justify-center font-bold text-white text-xs">VM</div>
+            <span className="text-xl font-bold tracking-tight hidden sm:inline">Vypar Manch</span>
+          </Link>
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-y-auto py-10 px-4">
+        <div className="max-w-2xl mx-auto">
+          
+          {/* Progress Indicator */}
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold text-slate-900">List Your Business</h1>
+              <span className="text-sm font-medium text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                Step {currentStep} of {totalSteps}
+              </span>
+            </div>
+            
+            <div className="relative flex justify-between w-full">
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 -translate-y-1/2 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-emerald-500 transition-all duration-300 ease-in-out" 
+                  style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+                ></div>
+              </div>
+              
+              {[1, 2, 3].map((step) => (
+                <div key={step} className={`relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors duration-300 ${
+                  currentStep === step 
+                    ? 'border-emerald-600 bg-white text-emerald-600' 
+                    : currentStep > step 
+                      ? 'border-emerald-500 bg-emerald-500 text-white'
+                      : 'border-slate-200 bg-white text-slate-400'
+                }`}>
+                  {currentStep > step ? <CheckCircle2 className="h-4 w-4" /> : step}
+                </div>
+              ))}
             </div>
           </div>
+
+          <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
+            <CardContent className="p-8">
+              
+              {/* STEP 1: Basic Information */}
+              {currentStep === 1 && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-emerald-600" /> Basic Information
+                    </h2>
+                    <p className="text-slate-500 text-sm mt-1">Tell us about what you do.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-slate-700 font-semibold">Business Name *</Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g. The Daily Brew"
+                      value={formData.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
+                      className="h-11 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-slate-700 font-semibold">Category *</Label>
+                    <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
+                      <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="text-slate-700 font-semibold">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe your services and what makes you unique..."
+                      value={formData.description}
+                      onChange={(e) => handleChange('description', e.target.value)}
+                      rows={4}
+                      className="bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20 resize-none"
+                    />
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-5 pt-2">
+                    <ImageUpload 
+                      label="Logo (Optional)" 
+                      value={(formData as any).logoUrl || null} 
+                      onChange={(url) => handleChange('logoUrl', url)} 
+                    />
+                    <ImageUpload 
+                      label="Banner Image (Optional)" 
+                      value={(formData as any).bannerUrl || null} 
+                      onChange={(url) => handleChange('bannerUrl', url)} 
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: Location */}
+              {currentStep === 2 && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-emerald-600" /> Location Details
+                    </h2>
+                    <p className="text-slate-500 text-sm mt-1">Where can customers find you?</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address_line1" className="text-slate-700 font-semibold">Address Line 1</Label>
+                    <Input
+                      id="address_line1"
+                      placeholder="Street address, building name"
+                      value={formData.address_line1}
+                      onChange={(e) => handleChange('address_line1', e.target.value)}
+                      className="h-11 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address_line2" className="text-slate-700 font-semibold">Address Line 2</Label>
+                    <Input
+                      id="address_line2"
+                      placeholder="Floor, suite, landmark (optional)"
+                      value={formData.address_line2}
+                      onChange={(e) => handleChange('address_line2', e.target.value)}
+                      className="h-11 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <CascadingLocationSelector
+                      state={formData.state}
+                      city={formData.city}
+                      onStateChange={(value) => handleChange('state', value)}
+                      onCityChange={(value) => handleChange('city', value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="pincode" className="text-slate-700 font-semibold">Pincode</Label>
+                    <Input
+                      id="pincode"
+                      placeholder="e.g. 201014"
+                      value={formData.pincode}
+                      onChange={(e) => handleChange('pincode', e.target.value)}
+                      className="h-11 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                    <div>
+                      <Label className="text-slate-700 font-semibold">Map Location</Label>
+                      <p className="text-xs text-slate-500 mb-3">Pinpoint your exact location for the map view.</p>
+                    </div>
+                    <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                      <LocationPicker onLocationSelect={handleLocationSelect} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: Contact */}
+              {currentStep === 3 && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                      <Phone className="h-5 w-5 text-emerald-600" /> Contact & Links
+                    </h2>
+                    <p className="text-slate-500 text-sm mt-1">How can customers reach out or learn more?</p>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="contact_phone" className="text-slate-700 font-semibold">Phone Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="contact_phone"
+                          placeholder="+91 98765 43210"
+                          value={formData.contact_phone}
+                          onChange={(e) => handleChange('contact_phone', e.target.value)}
+                          className="h-11 pl-10 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="contact_email" className="text-slate-700 font-semibold">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="contact_email"
+                          type="email"
+                          placeholder="hello@business.com"
+                          value={formData.contact_email}
+                          onChange={(e) => handleChange('contact_email', e.target.value)}
+                          className="h-11 pl-10 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="whatsapp_link" className="text-slate-700 font-semibold">WhatsApp Link</Label>
+                    <div className="relative">
+                      <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="whatsapp_link"
+                        placeholder="https://wa.me/919876543210"
+                        value={formData.whatsapp_link}
+                        onChange={(e) => handleChange('whatsapp_link', e.target.value)}
+                        className="h-11 pl-10 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-5 pt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="website_url" className="text-slate-700 font-semibold">Website</Label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="website_url"
+                          placeholder="https://yourwebsite.com"
+                          value={formData.website_url}
+                          onChange={(e) => handleChange('website_url', e.target.value)}
+                          className="h-11 pl-10 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="portfolio_url" className="text-slate-700 font-semibold">Portfolio / Social</Label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="portfolio_url"
+                          placeholder="Instagram, Behance, etc."
+                          value={formData.portfolio_url}
+                          onChange={(e) => handleChange('portfolio_url', e.target.value)}
+                          className="h-11 pl-10 bg-slate-50 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </CardContent>
+            
+            {/* Form Footer / Navigation */}
+            <div className="bg-slate-50 border-t p-6 flex items-center justify-between">
+              {currentStep > 1 ? (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleBack}
+                  className="bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                </Button>
+              ) : (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => navigate('/dashboard')}
+                  className="text-slate-500 hover:text-slate-800"
+                >
+                  Cancel
+                </Button>
+              )}
+
+              {currentStep < totalSteps ? (
+                <Button 
+                  type="button" 
+                  onClick={handleNext}
+                  className="bg-[#185b45] hover:bg-[#124635] text-white px-8"
+                >
+                  Continue <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button 
+                  type="button" 
+                  onClick={() => handleSubmit()}
+                  disabled={loading}
+                  className="bg-[#ff7a59] hover:bg-[#e0694a] text-white px-8 shadow-sm"
+                >
+                  {loading ? 'Creating...' : 'Submit Business'}
+                </Button>
+              )}
+            </div>
+          </Card>
+
         </div>
-      </nav>
-
-      <div className="section-container py-8 max-w-3xl">
-        <div className="mb-8 animate-slide-up">
-          <h1 className="text-3xl font-bold text-foreground">Create Your Business</h1>
-          <p className="text-muted-foreground mt-2">Fill in the details to list your business on Vypar Manch</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
-          <Card className="animate-slide-up">
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>Tell us about your business</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Business Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your business name"
-                  value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
-                <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryOptions.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe your business, services, and what makes you unique..."
-                  value={formData.description}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                  rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Location */}
-          <Card className="animate-slide-up">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Location
-              </CardTitle>
-              <CardDescription>Where is your business located?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="address_line1">Address Line 1</Label>
-                <Input
-                  id="address_line1"
-                  placeholder="Street address, building name"
-                  value={formData.address_line1}
-                  onChange={(e) => handleChange('address_line1', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address_line2">Address Line 2</Label>
-                <Input
-                  id="address_line2"
-                  placeholder="Floor, suite, landmark"
-                  value={formData.address_line2}
-                  onChange={(e) => handleChange('address_line2', e.target.value)}
-                />
-              </div>
-
-              <CascadingLocationSelector
-                state={formData.state}
-                city={formData.city}
-                onStateChange={(value) => handleChange('state', value)}
-                onCityChange={(value) => handleChange('city', value)}
-                required
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="pincode">Pincode</Label>
-                <Input
-                  id="pincode"
-                  placeholder="Pincode"
-                  value={formData.pincode}
-                  onChange={(e) => handleChange('pincode', e.target.value)}
-                />
-              </div>
-
-              {/* Map Location Picker */}
-              <div className="space-y-2">
-                <Label>Pin Location on Map</Label>
-                <p className="text-sm text-muted-foreground mb-2">Click on the map to set your exact business location</p>
-                <LocationPicker onLocationSelect={handleLocationSelect} />
-                {formData.latitude && formData.longitude && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Selected: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card className="animate-slide-up">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
-                Contact Information
-              </CardTitle>
-              <CardDescription>How can customers reach you?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="contact_phone">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="contact_phone"
-                      placeholder="+91 98765 43210"
-                      value={formData.contact_phone}
-                      onChange={(e) => handleChange('contact_phone', e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="contact_email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="contact_email"
-                      type="email"
-                      placeholder="contact@business.com"
-                      value={formData.contact_email}
-                      onChange={(e) => handleChange('contact_email', e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp_link">WhatsApp Link</Label>
-                <div className="relative">
-                  <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="whatsapp_link"
-                    placeholder="https://wa.me/919876543210"
-                    value={formData.whatsapp_link}
-                    onChange={(e) => handleChange('whatsapp_link', e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Format: https://wa.me/[country code][phone number]</p>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website_url">Website</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="website_url"
-                      placeholder="https://www.yourbusiness.com"
-                      value={formData.website_url}
-                      onChange={(e) => handleChange('website_url', e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="portfolio_url">Portfolio / Work Samples</Label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="portfolio_url"
-                      placeholder="https://behance.net/yourwork"
-                      value={formData.portfolio_url}
-                      onChange={(e) => handleChange('portfolio_url', e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">For freelancers: Add links to Behance, Dribbble, GitHub, etc.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submit */}
-          <div className="flex items-center justify-between gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="gradient" size="lg" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Business'}
-            </Button>
-          </div>
-        </form>
       </div>
     </div>
   );

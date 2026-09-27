@@ -1,372 +1,364 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Building2, Search, MapPin, Star, ChevronRight, 
-  Navigation, TrendingUp, Heart, Bell, User,
-  Utensils, ShoppingBag, Scissors, Dumbbell, Home, Car
+  Heart, Bell, User, Utensils, ShoppingBag, Scissors, 
+  Dumbbell, Home, Car, LayoutDashboard, Compass, Bookmark, 
+  MessageSquare, Edit3, Settings, HelpCircle, CheckCircle2, Circle
 } from 'lucide-react';
-import BusinessMap from '@/components/map/BusinessMap';
+import { api } from '@/lib/api';
 
 const categories = [
-  { name: 'Restaurant', icon: Utensils, color: 'bg-orange-100 text-orange-600' },
-  { name: 'Retail', icon: ShoppingBag, color: 'bg-blue-100 text-blue-600' },
-  { name: 'Beauty', icon: Scissors, color: 'bg-pink-100 text-pink-600' },
-  { name: 'Fitness', icon: Dumbbell, color: 'bg-green-100 text-green-600' },
-  { name: 'Home Services', icon: Home, color: 'bg-amber-100 text-amber-600' },
-  { name: 'Automotive', icon: Car, color: 'bg-slate-100 text-slate-600' },
+  { name: 'Restaurant', icon: Utensils, count: '8 places', color: 'text-orange-500 bg-orange-50' },
+  { name: 'Retail', icon: ShoppingBag, count: '5 places', color: 'text-blue-500 bg-blue-50' },
+  { name: 'Beauty', icon: Scissors, count: '4 places', color: 'text-pink-500 bg-pink-50' },
+  { name: 'Fitness', icon: Dumbbell, count: '3 places', color: 'text-green-500 bg-green-50' },
+  { name: 'Home Services', icon: Home, count: '2 places', color: 'text-amber-500 bg-amber-50' },
+  { name: 'Automotive', icon: Car, count: '2 places', color: 'text-slate-500 bg-slate-50' },
 ];
-
-interface Business {
-  id: string;
-  name: string;
-  slug: string;
-  category: string;
-  city: string;
-  latitude: number | null;
-  longitude: number | null;
-  average_rating: number;
-  total_reviews: number;
-  is_verified: boolean;
-  is_premium: boolean;
-  logo_url: string | null;
-  contact_phone: string | null;
-}
 
 export default function ConsumerHome() {
   const { user, profile, signOut, updateRole } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
-  const [nearbyBusinesses, setNearbyBusinesses] = useState<Business[]>([]);
-  const [trendingBusinesses, setTrendingBusinesses] = useState<Business[]>([]);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [nearMeEnabled, setNearMeEnabled] = useState(false);
 
-  useEffect(() => {
-    fetchBusinesses();
-  }, []);
-
-  useEffect(() => {
-    if (nearMeEnabled && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        },
-        (error) => console.error('Location error:', error)
-      );
-    }
-  }, [nearMeEnabled]);
-
-  const fetchBusinesses = async () => {
-    setLoading(true);
-    
-    // Fetch trending/featured businesses
-    const { data: trending } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('is_active', true)
-      .order('total_views', { ascending: false })
-      .limit(6);
-
-    // Fetch verified businesses
-    const { data: verified } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('is_active', true)
-      .eq('is_verified', true)
-      .order('average_rating', { ascending: false })
-      .limit(10);
-
-    setTrendingBusinesses(trending || []);
-    setNearbyBusinesses(verified || []);
-    setLoading(false);
-  };
-
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
-    if (locationQuery) params.set('location', locationQuery);
-    navigate(`/discover?${params.toString()}`);
-  };
+  // Dummy recently viewed for mockup
+  const recentlyViewed = [
+    { id: 1, name: 'The Daily Brew', location: 'Indirapuram, Ghaziabad', category: 'Café', rating: 4.8, reviews: 320, image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=400&q=80' },
+    { id: 2, name: 'FitZone Gym', location: 'Vaishali, Ghaziabad', category: 'Fitness', rating: 4.6, reviews: 210, image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=80' },
+    { id: 3, name: 'Glow Beauty Salon', location: 'Kaushambi, Ghaziabad', category: 'Salon', rating: 4.5, reviews: 182, image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80' },
+    { id: 4, name: 'Spice Villa', location: 'Raj Nagar, Ghaziabad', category: 'Restaurant', rating: 4.4, reviews: 98, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=80' },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="section-container">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/favicon.ico" alt="Vypar Manch Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
-              <span className="text-xl font-bold text-foreground">Vypar Manch</span>
-            </Link>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      {/* HEADER */}
+      <header className="h-16 bg-[#185b45] text-white flex items-center px-6 justify-between shrink-0 z-10 sticky top-0 shadow-sm">
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-black rounded flex items-center justify-center font-bold text-white text-xs">VM</div>
+            <span className="text-xl font-bold tracking-tight">Vypar Manch</span>
+          </Link>
+          <nav className="hidden md:flex gap-6 text-sm font-medium text-emerald-50">
+            <Link to="/discover" className="hover:text-white transition-colors">Discover</Link>
+            <Link to="/map" className="hover:text-white transition-colors">Map View</Link>
+            <button onClick={() => updateRole('BUSINESS_OWNER')} className="hover:text-white transition-colors">Become a Business Owner</button>
+          </nav>
+        </div>
 
-            <div className="hidden md:flex items-center gap-6">
-              <Link to="/discover" className="text-muted-foreground hover:text-foreground transition-colors">
-                Discover
-              </Link>
-              <Link to="/map" className="text-muted-foreground hover:text-foreground transition-colors">
-                Map View
-              </Link>
-              <Button 
-                variant="ghost" 
-                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium"
-                onClick={async () => {
-                  const { error } = await updateRole('BUSINESS_OWNER');
-                  if (!error) {
-                    navigate('/dashboard');
-                  }
-                }}
-              >
-                Become a Business Owner
-              </Button>
-              <Link to="/favorites" className="text-muted-foreground hover:text-foreground transition-colors">
-                <Heart className="h-5 w-5" />
-              </Link>
+        <div className="flex-1 max-w-2xl mx-8 hidden lg:flex">
+          <div className="flex w-full bg-white rounded-md overflow-hidden p-1 gap-1">
+            <div className="flex-1 flex items-center bg-white px-3 border-r">
+              <Search className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
+              <input type="text" placeholder="Search for businesses or services..." className="w-full h-8 outline-none text-slate-800 text-sm placeholder:text-slate-400" />
             </div>
-
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <Link to="/profile">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
-                  {profile?.full_name || 'Profile'}
-                </Button>
-              </Link>
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
-                Sign Out
-              </Button>
+            <div className="w-48 flex items-center bg-white px-3">
+              <MapPin className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
+              <input type="text" placeholder="Ghaziabad, UP" className="w-full h-8 outline-none text-slate-800 text-sm placeholder:text-slate-400" />
             </div>
+            <button className="bg-[#ff7a59] hover:bg-[#e0694a] text-white px-6 rounded text-sm font-medium transition-colors">Search</button>
           </div>
         </div>
-      </nav>
 
-      {/* Hero Search Section */}
-      <section className="bg-gradient-hero py-12 lg:py-16">
-        <div className="section-container">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground">
-              Welcome back, {(profile as any)?.fullName?.split(' ')[0] || profile?.full_name?.split(' ')[0] || 'there'}!
-            </h1>
-            <p className="text-primary-foreground/80">
-              Find the best services near you
-            </p>
-
-            {/* Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for businesses or services..." 
-                  className="h-12 pl-12 bg-background/95 border-0 shadow-lg"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                />
-              </div>
-              <div className="relative sm:w-48">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  value={locationQuery}
-                  onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="Location" 
-                  className="h-12 pl-12 bg-background/95 border-0 shadow-lg"
-                />
-              </div>
-              <Button size="lg" variant="accent" className="h-12 px-8" onClick={handleSearch}>
-                Search
-              </Button>
+        <div className="flex items-center gap-5">
+          <button className="text-emerald-50 hover:text-white"><Heart className="h-5 w-5" /></button>
+          <button className="text-emerald-50 hover:text-white relative">
+            <Bell className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#185b45]"></span>
+          </button>
+          <div className="flex items-center gap-2 cursor-pointer bg-[#124635] py-1.5 px-2.5 rounded-full hover:bg-[#0d3427] transition-colors">
+            <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">
+              {profile?.fullName?.charAt(0) || 'A'}
             </div>
-
-            {/* Near Me Toggle */}
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant={nearMeEnabled ? 'gradient' : 'outline'}
-                size="sm"
-                onClick={() => setNearMeEnabled(!nearMeEnabled)}
-                className="gap-2"
-              >
-                <Navigation className="h-4 w-4" />
-                Near Me
-              </Button>
-            </div>
+            <ChevronRight className="h-4 w-4 text-emerald-100" />
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Quick Categories */}
-      <section className="py-8">
-        <div className="section-container">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Quick Categories</h2>
-            <Link to="/categories">
-              <Button variant="ghost" size="sm">
-                View All <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+      <div className="flex flex-1 overflow-hidden">
+        {/* LEFT SIDEBAR */}
+        <aside className="w-64 bg-white border-r flex flex-col p-4 shrink-0 overflow-y-auto hidden lg:flex">
+          <nav className="space-y-1.5 flex-1 mt-4">
+            <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
+              <LayoutDashboard className="h-5 w-5" /> Dashboard
             </Link>
-          </div>
+            <Link to="/discover" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
+              <Compass className="h-5 w-5" /> Discover
+            </Link>
+            <Link to="/categories" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
+              <Building2 className="h-5 w-5" /> Categories
+            </Link>
+            <Link to="/saved" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
+              <Bookmark className="h-5 w-5" /> Saved
+            </Link>
+            <Link to="/messages" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
+              <MessageSquare className="h-5 w-5" /> Messages
+            </Link>
+            <Link to="/reviews" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg">
+              <Star className="h-5 w-5" /> Reviews
+            </Link>
+            <Link to="/profile" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-emerald-800 bg-emerald-50 rounded-lg">
+              <User className="h-5 w-5" /> Profile
+            </Link>
 
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {categories.map((category) => (
-              <Link
-                key={category.name}
-                to={`/discover?category=${category.name.toLowerCase().replace(' ', '_')}`}
-                className="flex flex-col items-center p-3 rounded-xl bg-card border border-border hover:shadow-md hover:-translate-y-0.5 transition-all"
-              >
-                <div className={`w-10 h-10 rounded-lg ${category.color} flex items-center justify-center mb-2`}>
-                  <category.icon className="h-5 w-5" />
+            <div className="pt-6">
+              <Button className="w-full bg-[#185b45] hover:bg-[#124635] text-white flex items-center gap-2">
+                <Building2 className="h-4 w-4" /> List Your Business
+              </Button>
+            </div>
+          </nav>
+
+          <div className="mt-8 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+            <h4 className="font-bold text-emerald-900 mb-2 leading-tight">Support Local<br/>Grow Together</h4>
+            <p className="text-xs text-emerald-700 mb-4 leading-relaxed">Discover amazing businesses in your area and be a part of a stronger community.</p>
+            <div className="w-full h-24 bg-emerald-100 rounded-lg overflow-hidden flex items-end justify-center pb-2 relative">
+              <Building2 className="h-16 w-16 text-emerald-800 opacity-20 absolute -bottom-4" />
+            </div>
+          </div>
+        </aside>
+
+        {/* MAIN SCROLLABLE AREA */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          <div className="max-w-[1200px] mx-auto flex flex-col xl:flex-row gap-6 lg:gap-8">
+            
+            {/* CENTER CONTENT */}
+            <div className="flex-1 space-y-8 min-w-0">
+              
+              {/* Profile Hero */}
+              <div className="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                <div className="h-32 bg-slate-200 w-full relative">
+                  <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80" alt="Cover" className="w-full h-full object-cover" />
                 </div>
-                <span className="text-xs font-medium text-foreground text-center">{category.name}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Map View */}
-      {nearbyBusinesses.length > 0 && (
-        <section className="py-8 bg-secondary/30">
-          <div className="section-container">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Nearby Businesses
-              </h2>
-              <Link to="/map">
-                <Button variant="ghost" size="sm">
-                  Full Map <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
-            </div>
-
-            <BusinessMap 
-              businesses={nearbyBusinesses.filter(b => b.latitude && b.longitude) as any}
-              height="300px"
-            />
-          </div>
-        </section>
-      )}
-
-      {/* Trending Services */}
-      <section className="py-8">
-        <div className="section-container">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-warning" />
-              Trending Now
-            </h2>
-            <Link to="/discover?sort=trending">
-              <Button variant="ghost" size="sm">
-                View All <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24 rounded-xl" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {trendingBusinesses.slice(0, 6).map((business) => (
-                <Link
-                  key={business.id}
-                  to={`/business/${business.slug}`}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:shadow-md transition-all"
-                >
-                  <div className="w-14 h-14 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-                    {business.logo_url ? (
-                      <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover rounded-lg" />
-                    ) : (
-                      <Building2 className="h-6 w-6 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-foreground truncate">{business.name}</h3>
-                      {business.is_verified && (
-                        <Badge variant="verified" className="text-[10px] px-1 py-0">✓</Badge>
-                      )}
+                <div className="px-6 pb-6 relative">
+                  <div className="absolute -top-12 border-4 border-white w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center text-4xl font-bold text-emerald-800 shadow-sm">
+                    {profile?.fullName?.charAt(0) || 'A'}
+                    <div className="absolute bottom-0 right-0 w-6 h-6 bg-white rounded-full border shadow flex items-center justify-center cursor-pointer hover:bg-slate-50">
+                      <Edit3 className="h-3 w-3 text-slate-600" />
                     </div>
-                    <p className="text-sm text-muted-foreground">{business.category}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 text-warning fill-warning" />
-                        <span className="text-xs font-medium">{business.average_rating || 'New'}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-start pt-14">
+                    <div>
+                      <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        {profile?.fullName || 'Aditya Kumar'} <Edit3 className="h-4 w-4 text-slate-400 cursor-pointer" />
+                      </h1>
+                      <p className="text-slate-500 text-sm mt-1">{profile?.email || 'aditya@example.com'}</p>
+                      <div className="flex items-center gap-4 mt-3 text-sm text-slate-600 font-medium">
+                        <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> Ghaziabad, UP</span>
+                        <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4" /> Joined Sep 2025</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">{business.city}</span>
+                      <p className="text-sm text-slate-500 mt-4 max-w-lg leading-relaxed">
+                        Exploring local businesses and supporting my community. Always looking for great places, services and local brands.
+                      </p>
+                    </div>
+                    <Button variant="outline" className="hidden sm:flex gap-2">
+                      <Edit3 className="h-4 w-4" /> Edit Profile
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="shadow-sm border border-slate-100">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600"><Star className="h-5 w-5" /></div>
+                    <div><div className="text-xl font-bold text-slate-800">12</div><div className="text-xs text-slate-500 font-medium">Reviews Given</div></div>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm border border-slate-100">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><Bookmark className="h-5 w-5" /></div>
+                    <div><div className="text-xl font-bold text-slate-800">28</div><div className="text-xs text-slate-500 font-medium">Saved Places</div></div>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm border border-slate-100">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600"><Compass className="h-5 w-5" /></div>
+                    <div><div className="text-xl font-bold text-slate-800">15</div><div className="text-xs text-slate-500 font-medium">Businesses Viewed</div></div>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm border border-slate-100">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600"><CheckCircle2 className="h-5 w-5" /></div>
+                    <div><div className="text-xl font-bold text-slate-800">5</div><div className="text-xs text-slate-500 font-medium">Helpful Votes</div></div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Tabs */}
+              <div className="border-b">
+                <div className="flex gap-6 overflow-x-auto">
+                  {['Overview', 'My Businesses', 'Saved', 'Reviews', 'Messages', 'Settings'].map((tab, i) => (
+                    <button key={tab} className={`pb-3 text-sm font-semibold whitespace-nowrap px-1 border-b-2 transition-colors ${i === 0 ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-400 hover:text-slate-800'}`}>
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recently Viewed */}
+              <section>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-slate-800">Recently Viewed</h3>
+                  <button className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">View All <ChevronRight className="h-4 w-4" /></button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {recentlyViewed.map(biz => (
+                    <div key={biz.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer shadow-sm">
+                      <div className="h-32 relative">
+                        <img src={biz.image} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <button className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow hover:bg-white"><Heart className="h-3.5 w-3.5 text-slate-600" /></button>
+                        <div className="absolute bottom-2 left-2"><Badge variant="secondary" className="bg-white/90 backdrop-blur text-xs text-slate-800 font-medium border-0">{biz.category}</Badge></div>
+                      </div>
+                      <div className="p-3">
+                        <h4 className="font-bold text-slate-800 text-sm truncate">{biz.name}</h4>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">{biz.location}</p>
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center gap-1 text-sm font-bold text-slate-700">
+                            <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" /> {biz.rating} <span className="text-slate-400 font-normal text-xs">({biz.reviews})</span>
+                          </div>
+                          <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none px-1.5 py-0">Verified</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Categories */}
+              <section>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-slate-800">Categories You Explore</h3>
+                  <button className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">View All <ChevronRight className="h-4 w-4" /></button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                  {categories.map(cat => (
+                    <div key={cat.name} className="bg-white shadow-sm border border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-slate-300 transition-colors cursor-pointer text-center group">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${cat.color}`}>
+                        <cat.icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-800">{cat.name}</div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">{cat.count}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            {/* RIGHT SIDEBAR */}
+            <div className="w-full xl:w-[320px] shrink-0 space-y-6">
+              
+              {/* Account Type */}
+              <Card className="shadow-sm border-slate-100">
+                <CardHeader className="pb-3 border-b border-slate-100 px-5 py-4 flex flex-row items-center justify-between">
+                  <CardTitle className="text-base font-bold text-slate-800">Account Type</CardTitle>
+                  <span className="text-xs text-slate-400 font-medium cursor-pointer hover:text-slate-600">Switch</span>
+                </CardHeader>
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                        <User className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-slate-900">Consumer</div>
+                        <div className="text-[10px] text-slate-500 leading-tight mt-0.5">Discover and support<br/>local businesses</div>
+                      </div>
+                    </div>
+                    <div className="w-4 h-4 rounded-full border-[4px] border-emerald-600 bg-white"></div>
+                  </div>
+                  
+                  <div onClick={() => updateRole('BUSINESS_OWNER')} className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-100 hover:border-emerald-200 bg-white cursor-pointer transition-colors group shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-emerald-50 transition-colors flex items-center justify-center border border-slate-100">
+                        <Building2 className="h-5 w-5 text-slate-400 group-hover:text-emerald-600" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-slate-700 group-hover:text-slate-900">Business Owner</div>
+                        <div className="text-[10px] text-slate-500 leading-tight mt-0.5">List and manage<br/>your business(es)</div>
+                      </div>
+                    </div>
+                    <div className="w-4 h-4 rounded-full border-2 border-slate-200 group-hover:border-emerald-300"></div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Profile Completion */}
+              <Card className="shadow-sm border-slate-100">
+                <CardHeader className="pb-2 px-5 py-4">
+                  <CardTitle className="text-base font-bold text-slate-800">Profile Completion</CardTitle>
+                </CardHeader>
+                <CardContent className="p-5 pt-2 space-y-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full border-4 border-emerald-500 border-r-slate-100 flex items-center justify-center font-bold text-emerald-700 shadow-sm relative">
+                       80%
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm text-emerald-800">Almost there!</div>
+                      <div className="text-xs text-slate-500 mt-1">Complete your profile to get a better experience.</div>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span className="text-slate-600 font-medium">Add profile details</span></div>
+                    <div className="flex items-center gap-3 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span className="text-slate-600 font-medium">Add location</span></div>
+                    <div className="flex items-center gap-3 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span className="text-slate-600 font-medium">Write a short bio</span></div>
+                    <div className="flex items-center gap-3 text-sm"><Circle className="h-4 w-4 text-slate-300" /> <span className="text-slate-500 font-medium">List a business (optional)</span></div>
+                  </div>
+                  <Button className="w-full bg-[#185b45] hover:bg-[#124635] text-white rounded-lg shadow-sm">Complete Profile</Button>
+                </CardContent>
+              </Card>
 
-      {/* Verified Highlights */}
-      <section className="py-8 bg-secondary/30">
-        <div className="section-container">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Verified Businesses</h2>
-            <Link to="/discover?verified=true">
-              <Button variant="ghost" size="sm">
-                View All <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
+              {/* Quick Actions */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-slate-800 px-1">Quick Actions</h4>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col py-1">
+                  <Link to="/business/new" className="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-50 group">
+                    <div className="flex items-center gap-3 text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                      <Building2 className="h-4 w-4 text-slate-400 group-hover:text-emerald-600" /> List a New Business
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500" />
+                  </Link>
+                  <Link to="/saved" className="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-50 group">
+                    <div className="flex items-center gap-3 text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                      <Bookmark className="h-4 w-4 text-slate-400 group-hover:text-emerald-600" /> View Saved Businesses
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500" />
+                  </Link>
+                  <Link to="/reviews" className="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-50 group">
+                    <div className="flex items-center gap-3 text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                      <Star className="h-4 w-4 text-slate-400 group-hover:text-emerald-600" /> Manage Reviews
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500" />
+                  </Link>
+                  <Link to="/settings" className="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-50 group">
+                    <div className="flex items-center gap-3 text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                      <Settings className="h-4 w-4 text-slate-400 group-hover:text-emerald-600" /> Account Settings
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500" />
+                  </Link>
+                  <Link to="/help" className="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-50 group">
+                    <div className="flex items-center gap-3 text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                      <HelpCircle className="h-4 w-4 text-slate-400 group-hover:text-emerald-600" /> Help & Support
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500" />
+                  </Link>
+                </div>
+              </div>
+
+            </div>
           </div>
-
-          {loading ? (
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="w-64 h-40 rounded-xl flex-shrink-0" />
-              ))}
-            </div>
-          ) : (
-            <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
-              {nearbyBusinesses.map((business) => (
-                <Link
-                  key={business.id}
-                  to={`/business/${business.slug}`}
-                  className="w-64 flex-shrink-0 rounded-xl bg-card border border-border overflow-hidden hover:shadow-md transition-all"
-                >
-                  <div className="h-24 bg-gradient-primary flex items-center justify-center">
-                    {business.logo_url ? (
-                      <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <Building2 className="h-10 w-10 text-primary-foreground" />
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium text-foreground truncate">{business.name}</h3>
-                      {business.is_premium && (
-                        <Badge variant="premium" className="text-[10px] px-1 py-0">⭐</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{business.category}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Star className="h-3 w-3 text-warning fill-warning" />
-                      <span className="text-sm font-medium">{business.average_rating || 'New'}</span>
-                      <span className="text-xs text-muted-foreground">• {business.city}</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        </main>
+      </div>
     </div>
   );
 }

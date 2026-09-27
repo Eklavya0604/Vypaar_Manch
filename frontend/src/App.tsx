@@ -15,6 +15,7 @@ import ConsumerHome from "./pages/ConsumerHome";
 import OwnerHome from "./pages/OwnerHome";
 import MapView from "./pages/MapView";
 import NotFound from "./pages/NotFound";
+import Placeholder from "./pages/Placeholder";
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
@@ -41,6 +42,17 @@ const App = () => (
             <Route path="/business/new" element={<CreateBusiness />} />
             <Route path="/business/:id/edit" element={<EditBusiness />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            
+            {/* Placeholder routes for new dashboard layout */}
+            <Route path="/categories" element={<Placeholder />} />
+            <Route path="/saved" element={<Placeholder />} />
+            <Route path="/messages" element={<Placeholder />} />
+            <Route path="/reviews" element={<Placeholder />} />
+            <Route path="/profile" element={<Placeholder />} />
+            <Route path="/settings" element={<Placeholder />} />
+            <Route path="/favorites" element={<Placeholder />} />
+            <Route path="/help" element={<Placeholder />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
