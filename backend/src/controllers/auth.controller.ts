@@ -30,7 +30,8 @@ export const register = async (req: Request, res: Response) => {
       }
     });
 
-    const token = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
+    const secret = process.env.JWT_SECRET || 'supersecret';
+    const token = jwt.sign({ id: newUser.id, role: newUser.role }, secret, { expiresIn: '7d' });
     
     res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
     res.status(201).json({ user: newUser, token });
@@ -55,7 +56,8 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const secret = process.env.JWT_SECRET || 'supersecret';
+    const token = jwt.sign({ id: user.id, role: user.role }, secret, { expiresIn: '7d' });
     
     res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
     res.status(200).json({ user, token });
@@ -94,7 +96,8 @@ export const googleAuth = async (req: Request, res: Response) => {
       });
     }
 
-    const jwtToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const secret = process.env.JWT_SECRET || 'supersecret';
+    const jwtToken = jwt.sign({ id: user.id, role: user.role }, secret, { expiresIn: '7d' });
     
     res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
     res.status(200).json({ user, token: jwtToken });
@@ -105,12 +108,11 @@ export const googleAuth = async (req: Request, res: Response) => {
 
 export const me = async (req: Request, res: Response) => {
   try {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = (req as any).user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string, role: string };
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id }
+      where: { id: userId }
     });
 
     if (!user) throw new Error('User not found');
@@ -151,7 +153,8 @@ export const updateRole = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as { id: string, role: string };
+    const secret = process.env.JWT_SECRET || 'supersecret';
+    const decoded = jwt.verify(token, secret) as { id: string, role: string };
     
     const user = await prisma.user.update({
       where: { id: decoded.id },
@@ -159,7 +162,7 @@ export const updateRole = async (req: Request, res: Response) => {
     });
 
     // Sign new token with updated role
-    const jwtToken = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
+    const jwtToken = jwt.sign({ id: user.id, role: user.role }, secret, { expiresIn: '7d' });
     res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' });
 
     res.status(200).json({ user, token: jwtToken });

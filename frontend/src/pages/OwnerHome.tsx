@@ -45,7 +45,7 @@ interface ServiceRequest {
 }
 
 export default function OwnerHome() {
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -60,10 +60,10 @@ export default function OwnerHome() {
   const [generatingQR, setGeneratingQR] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate('/');
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (profile) {

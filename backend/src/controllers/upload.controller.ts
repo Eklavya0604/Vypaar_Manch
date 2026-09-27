@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 
-cloudinary.config({
-  cloudinary_url: process.env.CLOUDINARY_URL
-});
+// Cloudinary SDK automatically detects process.env.CLOUDINARY_URL
 
 export const uploadImage = async (req: Request, res: Response) => {
   try {

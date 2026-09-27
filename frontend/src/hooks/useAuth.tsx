@@ -89,11 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Error logging out from server:', error);
+    } finally {
       setUser(null);
       toast.success('Logged out successfully');
       window.location.replace('/');
-    } catch (error) {
-      toast.error('Error logging out');
     }
   };
 

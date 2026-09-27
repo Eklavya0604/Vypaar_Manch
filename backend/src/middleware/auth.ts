@@ -14,10 +14,12 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     });
     if (isBlacklisted) return res.status(401).json({ error: 'Token is invalid' });
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const secret = process.env.JWT_SECRET || 'supersecret';
+    const decoded = jwt.verify(token, secret);
     (req as any).user = decoded;
     next();
   } catch (err) {
+    console.error('requireAuth Error:', err);
     res.status(401).json({ error: 'Invalid token' });
   }
 };

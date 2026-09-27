@@ -81,8 +81,6 @@ export default function ConsumerHome() {
           </Link>
           <nav className="hidden md:flex gap-6 text-sm font-medium text-emerald-50">
             <Link to="/discover" className="hover:text-white transition-colors">Discover</Link>
-            <Link to="/map" className="hover:text-white transition-colors">Map View</Link>
-            <button onClick={() => updateRole('BUSINESS_OWNER')} className="hover:text-white transition-colors">Become a Business Owner</button>
           </nav>
         </div>
 

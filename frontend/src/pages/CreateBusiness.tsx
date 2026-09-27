@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
@@ -140,9 +140,9 @@ export default function CreateBusiness() {
 
       toast.success('Business created successfully!');
       navigate('/consumer');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating business:', error);
-      toast.error('Failed to create business');
+      toast.error(error.response?.data?.error || 'Failed to create business');
     } finally {
       setLoading(false);
     }

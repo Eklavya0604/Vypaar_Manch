@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { register, login, googleAuth, me, logout, updateRole } from '../controllers/auth.controller';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
 router.post('/register', register);
 router.post('/login', login);
 router.post('/google', googleAuth);
-router.get('/me', me);
-router.post('/logout', logout);
-router.put('/role', updateRole);
+router.get('/me', requireAuth, me);
+router.post('/logout', requireAuth, logout);
+router.put('/role', requireAuth, updateRole);
 
 export default router;
